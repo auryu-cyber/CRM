@@ -1,0 +1,898 @@
+<script>
+// ============================================================
+// JavaScript.html - CRM Client-Side Logic
+// ============================================================
+
+// Global state
+var app = {
+  user: null,
+  currentPage: 'dashboard',
+  data: {
+    customers: [],
+    activities: [],
+    deals: [],
+    tasks: [],
+    salesTargets: [],
+    users: [],
+    dashboard: null
+  },
+  formData: {},
+  editingId: null
+};
+
+// Initialize app
+function initApp(userData) {
+  app.user = userData;
+  currentLang = localStorage.getItem('crm_lang') || 'ja';
+
+  // Update user info in header
+  document.getElementById('userName').textContent = userData.name || 'User';
+  document.getElementById('userRole').textContent = t(
+    userData.role === 'admin' ? 'roleAdmin' :
+    userData.role === 'manager' ? 'roleManager' : 'roleSales'
+  );
+  document.getElementById('userAvatar').textContent = (userData.name || 'U').charAt(0).toUpperCase();
+
+  // Show/hide admin menu
+  document.getElementById('navUsers').style.display = userData.role === 'admin' ? 'block' : 'none';
+
+  // Apply saved language
+  applyTranslations();
+
+  // Load initial data
+  navigate('dashboard');
+}
+
+// Navigate to a page
+function navigate(page) {
+  app.currentPage = page;
+  closeSidebar();
+
+  // Update nav state
+  document.querySelectorAll('.nav-item').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.page === page);
+  });
+
+  // Show loading
+  document.getElementById('pageContent').innerHTML = '<div class="loading-overlay" style="position:relative;min-height:400px"><div class="spinner"></div></div>';
+
+  // Render page
+  switch(page) {
+    case 'dashboard': renderDashboard(); break;
+    case 'customers': renderCustomersPage(); break;
+    case 'activities': renderActivitiesPage(); break;
+    case 'deals': renderDealsPage(); break;
+    case 'tasks': renderTasksPage(); break;
+    case 'reports': renderReportsPage(); break;
+    case 'salesTargets': renderSalesTargetsPage(); break;
+    case 'users': renderUsersPage(); break;
+  }
+}
+
+// ============================================================
+// DASHBOARD PAGE
+// ============================================================
+function renderDashboard() {
+  setHeaderTitle(t('dashboardTitle'));
+  google.script.run.withSuccessHandler(function(data) {
+    app.data.dashboard = data;
+    var target = data.monthlyTarget || 1;
+    var achievement = target > 0 ? Math.round((data.wonAmountThisMonth / target) * 100) : 0;
+
+    var html = `
+      <div class="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-icon">🏢</div>
+          <div class="kpi-label">${t('totalCustomers')}</div>
+          <div class="kpi-value">${data.totalCustomers || 0}</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-icon">🎉</div>
+          <div class="kpi-label">${t('wonThisMonth')}</div>
+          <div class="kpi-value">${formatCurrency(data.wonAmountThisMonth || 0)}</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-icon">📊</div>
+          <div class="kpi-label">${t('pipeline')}</div>
+          <div class="kpi-value">${formatCurrency(data.pipelineAmount || 0)}</div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-icon">⏰</div>
+          <div class="kpi-label">${t('overdueTasks')}</div>
+          <div class="kpi-value">${data.overdueTaskCount || 0}</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">${t('monthlyTarget')}</span>
+          </div>
+          <div style="padding: 0 20px 20px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+              <span style="font-size:13px;color:#5f6368">${t('actual')}</span>
+              <span style="font-weight:600">${formatCurrency(data.wonAmountThisMonth || 0)}</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill ${achievement >= 100 ? 'green' : achievement >= 80 ? '' : 'yellow'}" style="width:${Math.min(achievement, 100)}%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:8px">
+              <span style="font-size:12px;color:#5f6368">目標 / Target: ${formatCurrency(data.monthlyTarget || 0)}</span>
+              <span style="font-weight:600;color:${achievement >= 100 ? '#137333' : '#1a73e8'}">${achievement}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">${t('dealsByStage')}</span>
+          </div>
+          <div class="pipeline-stages">
+            ${Object.keys(data.stageCount || {}).map(function(stage) {
+              return \`<div class="pipeline-stage">
+                <div class="stage-count">\${data.stageCount[stage]}</div>
+                <div class="stage-label">\${t('stage' + capitalizeFirst(stage.replace('Prospecting','Prospecting').replace(/([A-Z])/g, '$1')))}</div>
+              </div>\`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">${t('recentActivities')}</span>
+        </div>
+        <div style="padding: 0 20px 20px">
+          ${data.recentActivities && data.recentActivities.length > 0 ? \`
+            <table style="width:100%;font-size:13px">
+              <tbody>
+                \${data.recentActivities.map(function(a) {
+                  return \`<tr>
+                    <td style="padding:8px 0;border-bottom:1px solid #dadce0">
+                      <div style="font-weight:600">\${a.subject || a.title || '(No subject)'}</div>
+                      <div style="font-size:11px;color:#5f6368">\${formatDate(a.createdAt)} by \${a.createdBy}</div>
+                    </td>
+                  </tr>\`;
+                }).join('')}
+              </tbody>
+            </table>
+          \` : \`<p style="color:#5f6368;text-align:center;padding:20px">${t('noData')}</p>\`}
+        </div>
+      </div>
+    `;
+
+    document.getElementById('pageContent').innerHTML = html;
+  }).getDashboardData();
+}
+
+// ============================================================
+// CUSTOMERS PAGE
+// ============================================================
+function renderCustomersPage() {
+  setHeaderTitle(t('customersTitle'));
+  document.getElementById('pageContent').innerHTML = \`
+    <div class="page-header">
+      <h2>${t('customersTitle')}</h2>
+      <button class="btn btn-primary" onclick="showCustomerForm()">➕ ${t('addCustomer')}</button>
+    </div>
+    <div class="filters-bar">
+      <div class="search-bar" style="flex:1;max-width:100%">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="${t('search')}" id="customerSearch" onkeyup="filterCustomers(this.value)">
+      </div>
+    </div>
+    <div id="customersList"></div>
+  \`;
+
+  google.script.run.withSuccessHandler(function(customers) {
+    app.data.customers = customers;
+    renderCustomersTable(customers);
+  }).getCustomers();
+}
+
+function renderCustomersTable(customers) {
+  var html = \`
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>${t('companyName')}</th>
+            <th>${t('contactName')}</th>
+            <th>${t('email')}</th>
+            <th>${t('phone')}</th>
+            <th>${t('industry')}</th>
+            <th>${t('status')}</th>
+            <th>${t('actions')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          \${customers.map(function(c) {
+            return \`<tr>
+              <td><strong>\${c.companyName || '-'}</strong></td>
+              <td>\${c.contactName || '-'}</td>
+              <td>\${c.email || '-'}</td>
+              <td>\${c.phone || '-'}</td>
+              <td>\${c.industry || '-'}</td>
+              <td><span class="badge badge-\${c.status === 'Active' ? 'green' : 'gray'}">\${c.status}</span></td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn btn-sm btn-secondary" onclick="showCustomerForm('\${c.id}')">✏️</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteCustomerConfirm('\${c.id}')">🗑️</button>
+                </div>
+              </td>
+            </tr>\`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  \`;
+  document.getElementById('customersList').innerHTML = html || \`<div class="empty-state"><p>${t('noData')}</p></div>\`;
+}
+
+function filterCustomers(query) {
+  var filtered = app.data.customers.filter(function(c) {
+    return c.companyName.toLowerCase().indexOf(query.toLowerCase()) !== -1 ||
+           c.contactName.toLowerCase().indexOf(query.toLowerCase()) !== -1 ||
+           c.email.toLowerCase().indexOf(query.toLowerCase()) !== -1;
+  });
+  renderCustomersTable(filtered);
+}
+
+function showCustomerForm(id) {
+  app.editingId = id;
+  var customer = id ? app.data.customers.find(function(c) { return c.id === id; }) : {};
+
+  var html = \`
+    <div class="form-group">
+      <label class="form-label">${t('companyName')} <span class="required">*</span></label>
+      <input type="text" class="form-control" id="formCompanyName" value="\${customer.companyName || ''}" placeholder="Company Name">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">${t('contactName')}</label>
+        <input type="text" class="form-control" id="formContactName" value="\${customer.contactName || ''}" placeholder="Contact Name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('email')}</label>
+        <input type="email" class="form-control" id="formEmail" value="\${customer.email || ''}" placeholder="Email">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">${t('phone')}</label>
+        <input type="tel" class="form-control" id="formPhone" value="\${customer.phone || ''}" placeholder="Phone">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('industry')}</label>
+        <input type="text" class="form-control" id="formIndustry" value="\${customer.industry || ''}" placeholder="Industry">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">${t('country')}</label>
+        <input type="text" class="form-control" id="formCountry" value="\${customer.country || ''}" placeholder="Country">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('status')}</label>
+        <select class="form-control" id="formStatus">
+          <option value="Prospect" \${customer.status === 'Prospect' ? 'selected' : ''}>Prospect</option>
+          <option value="Active" \${customer.status === 'Active' ? 'selected' : ''}>Active</option>
+          <option value="Inactive" \${customer.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${t('notes')}</label>
+      <textarea class="form-control" id="formNotes" placeholder="Notes">\${customer.notes || ''}</textarea>
+    </div>
+  \`;
+
+  document.getElementById('formModalTitle').textContent = id ? t('editCustomer') : t('addCustomer');
+  document.getElementById('formModalBody').innerHTML = html;
+  document.getElementById('formModal').classList.add('open');
+}
+
+function deleteCustomerConfirm(id) {
+  showConfirm(t('confirmDelete'), function() {
+    google.script.run.deleteCustomer(id);
+    app.data.customers = app.data.customers.filter(function(c) { return c.id !== id; });
+    renderCustomersTable(app.data.customers);
+    closeConfirm();
+    showToast(t('deleteSuccess'), 'success');
+  });
+}
+
+function submitForm() {
+  if (app.currentPage === 'customers') submitCustomerForm();
+  else if (app.currentPage === 'activities') submitActivityForm();
+  else if (app.currentPage === 'deals') submitDealForm();
+  else if (app.currentPage === 'tasks') submitTaskForm();
+  else if (app.currentPage === 'salesTargets') submitSalesTargetForm();
+  else if (app.currentPage === 'users') submitUserForm();
+}
+
+function submitCustomerForm() {
+  var data = {
+    id: app.editingId || generateId(),
+    companyName: document.getElementById('formCompanyName').value,
+    contactName: document.getElementById('formContactName').value,
+    email: document.getElementById('formEmail').value,
+    phone: document.getElementById('formPhone').value,
+    industry: document.getElementById('formIndustry').value,
+    country: document.getElementById('formCountry').value,
+    status: document.getElementById('formStatus').value,
+    notes: document.getElementById('formNotes').value,
+    assignedTo: app.user.email
+  };
+
+  google.script.run.withSuccessHandler(function() {
+    closeFormModal();
+    navigate('customers');
+    showToast(t('saveSuccess'), 'success');
+  }).saveCustomer(data);
+}
+
+// ... [CONTINUE IN NEXT PART - Activities, Deals, Tasks, etc.]
+// Page renders for Activities, Deals, Tasks, Reports, SalesTargets, Users
+// will be similar pattern to Customers above
+
+// ============================================================
+// ACTIVITIES PAGE (simplified)
+// ============================================================
+function renderActivitiesPage() {
+  setHeaderTitle(t('activitiesTitle'));
+  document.getElementById('pageContent').innerHTML = \`
+    <div class="page-header">
+      <h2>${t('activitiesTitle')}</h2>
+      <button class="btn btn-primary" onclick="showActivityForm()">➕ ${t('addActivity')}</button>
+    </div>
+    <div id="activitiesList"></div>
+  \`;
+
+  google.script.run.withSuccessHandler(function(activities) {
+    app.data.activities = activities;
+    var html = \`<div class="table-container"><table>
+      <thead><tr><th>${t('subject')}</th><th>${t('activityType')}</th><th>${t('activityDate')}</th><th>${t('actions')}</th></tr></thead>
+      <tbody>\${activities.map(function(a) {
+        return \`<tr><td><strong>\${a.subject}</strong></td><td><span class="badge badge-blue">\${a.type}</span></td><td>\${formatDate(a.activityDate)}</td>
+        <td><div class="table-actions"><button class="btn btn-sm btn-secondary" onclick="showActivityForm('\${a.id}')">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteActivity('\${a.id}')">🗑️</button></div></td></tr>\`;
+      }).join('')}</tbody>
+    </table></div>\`;
+    document.getElementById('activitiesList').innerHTML = html;
+  }).getActivities();
+}
+
+function showActivityForm(id) {
+  app.editingId = id;
+  var activity = id ? app.data.activities.find(function(a) { return a.id === id; }) : {};
+
+  var html = \`
+    <div class="form-group">
+      <label class="form-label">${t('subject')} <span class="required">*</span></label>
+      <input type="text" class="form-control" id="formActivitySubject" value="\${activity.subject || ''}">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">${t('activityType')}</label>
+        <select class="form-control" id="formActivityType">
+          <option>Meeting</option>
+          <option>Call</option>
+          <option>Email</option>
+          <option>Visit</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('activityDate')}</label>
+        <input type="date" class="form-control" id="formActivityDate" value="\${activity.activityDate || ''}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${t('description')}</label>
+      <textarea class="form-control" id="formActivityDesc">\${activity.description || ''}</textarea>
+    </div>
+  \`;
+
+  document.getElementById('formModalTitle').textContent = id ? t('editActivity') : t('addActivity');
+  document.getElementById('formModalBody').innerHTML = html;
+  document.getElementById('formModal').classList.add('open');
+}
+
+function submitActivityForm() {
+  var data = {
+    id: app.editingId || generateId(),
+    subject: document.getElementById('formActivitySubject').value,
+    type: document.getElementById('formActivityType').value,
+    activityDate: document.getElementById('formActivityDate').value,
+    description: document.getElementById('formActivityDesc').value
+  };
+  google.script.run.withSuccessHandler(function() {
+    closeFormModal();
+    navigate('activities');
+    showToast(t('saveSuccess'), 'success');
+  }).saveActivity(data);
+}
+
+function deleteActivity(id) {
+  google.script.run.deleteActivity(id);
+  app.data.activities = app.data.activities.filter(function(a) { return a.id !== id; });
+  navigate('activities');
+}
+
+// ============================================================
+// DEALS PAGE (simplified)
+// ============================================================
+function renderDealsPage() {
+  setHeaderTitle(t('dealsTitle'));
+  document.getElementById('pageContent').innerHTML = \`
+    <div class="page-header">
+      <h2>${t('dealsTitle')}</h2>
+      <button class="btn btn-primary" onclick="showDealForm()">➕ ${t('addDeal')}</button>
+    </div>
+    <div id="dealsList"></div>
+  \`;
+
+  google.script.run.withSuccessHandler(function(deals) {
+    app.data.deals = deals;
+    var html = \`<div class="table-container"><table>
+      <thead><tr><th>${t('dealTitle')}</th><th>${t('amount')}</th><th>${t('stage')}</th><th>RFQ</th><th>${t('actions')}</th></tr></thead>
+      <tbody>\${deals.map(function(d) {
+        return \`<tr><td><strong>\${d.title}</strong></td><td>\${formatCurrency(d.amount)}</td><td><span class="badge badge-blue stage-\${d.stage}">\${d.stage}</span></td><td>\${d.rfqNumber || '-'}</td>
+        <td><div class="table-actions"><button class="btn btn-sm btn-secondary" onclick="showDealForm('\${d.id}')">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteDeal('\${d.id}')">🗑️</button></div></td></tr>\`;
+      }).join('')}</tbody>
+    </table></div>\`;
+    document.getElementById('dealsList').innerHTML = html;
+  }).getDeals();
+}
+
+function showDealForm(id) {
+  app.editingId = id;
+  var deal = id ? app.data.deals.find(function(d) { return d.id === id; }) : {};
+
+  var html = \`
+    <div class="form-group">
+      <label class="form-label">${t('dealTitle')} <span class="required">*</span></label>
+      <input type="text" class="form-control" id="formDealTitle" value="\${deal.title || ''}">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">${t('amount')}</label>
+        <input type="number" class="form-control" id="formDealAmount" value="\${deal.amount || ''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('stage')}</label>
+        <select class="form-control" id="formDealStage">
+          <option value="Prospecting">Prospecting</option>
+          <option value="Qualification">Qualification</option>
+          <option value="Proposal">Proposal</option>
+          <option value="Negotiation">Negotiation</option>
+          <option value="Won">Won</option>
+          <option value="Lost">Lost</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">RFQ Number</label>
+        <input type="text" class="form-control" id="formRFQNumber" value="\${deal.rfqNumber || ''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('probability')}</label>
+        <input type="number" class="form-control" min="0" max="100" id="formProbability" value="\${deal.probability || '50'}">
+      </div>
+    </div>
+  \`;
+
+  document.getElementById('formModalTitle').textContent = id ? t('editDeal') : t('addDeal');
+  document.getElementById('formModalBody').innerHTML = html;
+  document.getElementById('formModal').classList.add('open');
+}
+
+function submitDealForm() {
+  var data = {
+    id: app.editingId || generateId(),
+    title: document.getElementById('formDealTitle').value,
+    amount: parseFloat(document.getElementById('formDealAmount').value) || 0,
+    stage: document.getElementById('formDealStage').value,
+    rfqNumber: document.getElementById('formRFQNumber').value,
+    probability: parseFloat(document.getElementById('formProbability').value) || 50,
+    closedDate: new Date().toISOString().split('T')[0]
+  };
+  google.script.run.withSuccessHandler(function() {
+    closeFormModal();
+    navigate('deals');
+    showToast(t('saveSuccess'), 'success');
+  }).saveDeal(data);
+}
+
+function deleteDeal(id) {
+  google.script.run.deleteDeal(id);
+  app.data.deals = app.data.deals.filter(function(d) { return d.id !== id; });
+  navigate('deals');
+}
+
+// ============================================================
+// TASKS PAGE
+// ============================================================
+function renderTasksPage() {
+  setHeaderTitle(t('tasksTitle'));
+  document.getElementById('pageContent').innerHTML = \`
+    <div class="page-header">
+      <h2>${t('tasksTitle')}</h2>
+      <button class="btn btn-primary" onclick="showTaskForm()">➕ ${t('addTask')}</button>
+    </div>
+    <div id="tasksList"></div>
+  \`;
+
+  google.script.run.withSuccessHandler(function(tasks) {
+    app.data.tasks = tasks;
+    var html = \`<div class="table-container"><table>
+      <thead><tr><th>${t('taskTitle')}</th><th>${t('priority')}</th><th>${t('dueDate')}</th><th>${t('taskStatus')}</th><th>${t('actions')}</th></tr></thead>
+      <tbody>\${tasks.map(function(t) {
+        return \`<tr><td><strong>\${t.title}</strong></td><td><span class="badge badge-\${t.priority === 'High' ? 'red' : t.priority === 'Medium' ? 'yellow' : 'gray'}">\${t.priority}</span></td><td>\${formatDate(t.dueDate)}</td><td><span class="badge badge-\${t.status === 'Done' ? 'green' : t.status === 'In Progress' ? 'blue' : 'gray'}">\${t.status}</span></td>
+        <td><div class="table-actions"><button class="btn btn-sm btn-secondary" onclick="showTaskForm('\${t.id}')">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteTask('\${t.id}')">🗑️</button></div></td></tr>\`;
+      }).join('')}</tbody>
+    </table></div>\`;
+    document.getElementById('tasksList').innerHTML = html;
+  }).getTasks();
+}
+
+function showTaskForm(id) {
+  app.editingId = id;
+  var task = id ? app.data.tasks.find(function(t) { return t.id === id; }) : {};
+
+  var html = \`
+    <div class="form-group">
+      <label class="form-label">${t('taskTitle')} <span class="required">*</span></label>
+      <input type="text" class="form-control" id="formTaskTitle" value="\${task.title || ''}">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">${t('priority')}</label>
+        <select class="form-control" id="formTaskPriority">
+          <option value="High">High</option>
+          <option value="Medium" selected>Medium</option>
+          <option value="Low">Low</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('taskStatus')}</label>
+        <select class="form-control" id="formTaskStatus">
+          <option value="Open">Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Done">Done</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${t('dueDate')}</label>
+      <input type="date" class="form-control" id="formTaskDue" value="\${task.dueDate || ''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">${t('description')}</label>
+      <textarea class="form-control" id="formTaskDesc">\${task.description || ''}</textarea>
+    </div>
+  \`;
+
+  document.getElementById('formModalTitle').textContent = id ? t('editTask') : t('addTask');
+  document.getElementById('formModalBody').innerHTML = html;
+  document.getElementById('formModal').classList.add('open');
+}
+
+function submitTaskForm() {
+  var data = {
+    id: app.editingId || generateId(),
+    title: document.getElementById('formTaskTitle').value,
+    priority: document.getElementById('formTaskPriority').value,
+    status: document.getElementById('formTaskStatus').value,
+    dueDate: document.getElementById('formTaskDue').value,
+    description: document.getElementById('formTaskDesc').value,
+    assignee: app.user.email
+  };
+  google.script.run.withSuccessHandler(function() {
+    closeFormModal();
+    navigate('tasks');
+    showToast(t('saveSuccess'), 'success');
+  }).saveTask(data);
+}
+
+function deleteTask(id) {
+  google.script.run.deleteTask(id);
+  app.data.tasks = app.data.tasks.filter(function(t) { return t.id !== id; });
+  navigate('tasks');
+}
+
+// ============================================================
+// REPORTS PAGE (simplified)
+// ============================================================
+function renderReportsPage() {
+  setHeaderTitle(t('reportsTitle'));
+  document.getElementById('pageContent').innerHTML = \`
+    <div class="page-header"><h2>${t('reportsTitle')}</h2></div>
+    <div id="reportsList"></div>
+  \`;
+
+  google.script.run.withSuccessHandler(function(data) {
+    var year = new Date().getFullYear();
+    var html = \`
+      <div class="kpi-grid">
+        <div class="kpi-card green">
+          <div class="kpi-icon">🏆</div>
+          <div class="kpi-label">${t('winRate')}</div>
+          <div class="kpi-value">\${data.winRate}%</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-icon">📊</div>
+          <div class="kpi-label">${t('totalDeals')}</div>
+          <div class="kpi-value">\${data.totalDeals}</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-icon">🎉</div>
+          <div class="kpi-label">${t('wonDeals')}</div>
+          <div class="kpi-value">\${data.wonDeals}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">${t('monthlySales')} \${year}</span>
+        </div>
+        <table style="width:100%;font-size:13px">
+          <tbody>\${data.months.map(function(m, i) {
+            return \`<tr><td style="padding:8px 0">\${I18N[currentLang].months[i]}</td><td style="font-weight:600">\${formatCurrency(data.monthlySales[i+1] || 0)}</td></tr>\`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+    \`;
+    document.getElementById('reportsList').innerHTML = html;
+  }).getReportData();
+}
+
+// ============================================================
+// SALES TARGETS PAGE
+// ============================================================
+function renderSalesTargetsPage() {
+  setHeaderTitle(t('salesTargetsTitle'));
+  document.getElementById('pageContent').innerHTML = \`
+    <div class="page-header">
+      <h2>${t('salesTargetsTitle')}</h2>
+      <button class="btn btn-primary" onclick="showSalesTargetForm()">➕ ${t('addTarget')}</button>
+    </div>
+    <div id="targetsList"></div>
+  \`;
+
+  google.script.run.withSuccessHandler(function(targets) {
+    app.data.salesTargets = targets;
+    var html = \`<div class="table-container"><table>
+      <thead><tr><th>${t('year')}</th><th>${t('month')}</th><th>${t('targetAmount')}</th><th>${t('actions')}</th></tr></thead>
+      <tbody>\${targets.map(function(t) {
+        return \`<tr><td>\${t.year}</td><td>\${I18N[currentLang].months[parseInt(t.month)-1]}</td><td>\${formatCurrency(t.targetAmount)}</td>
+        <td><div class="table-actions"><button class="btn btn-sm btn-secondary" onclick="showSalesTargetForm('\${t.id}')">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteSalesTarget('\${t.id}')">🗑️</button></div></td></tr>\`;
+      }).join('')}</tbody>
+    </table></div>\`;
+    document.getElementById('targetsList').innerHTML = html;
+  }).getSalesTargets();
+}
+
+function showSalesTargetForm(id) {
+  app.editingId = id;
+  var target = id ? app.data.salesTargets.find(function(t) { return t.id === id; }) : { year: new Date().getFullYear() };
+
+  var html = \`
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">${t('year')}</label>
+        <input type="number" class="form-control" id="formTargetYear" value="\${target.year || new Date().getFullYear()}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${t('month')}</label>
+        <select class="form-control" id="formTargetMonth">
+          \${I18N[currentLang].months.map(function(m, i) {
+            return \`<option value="\${i+1}" \${target.month == i+1 ? 'selected' : ''}>\${m}</option>\`;
+          }).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${t('targetAmount')} <span class="required">*</span></label>
+      <input type="number" class="form-control" id="formTargetAmount" value="\${target.targetAmount || ''}">
+    </div>
+  \`;
+
+  document.getElementById('formModalTitle').textContent = id ? t('editTarget') : t('addTarget');
+  document.getElementById('formModalBody').innerHTML = html;
+  document.getElementById('formModal').classList.add('open');
+}
+
+function submitSalesTargetForm() {
+  var data = {
+    id: app.editingId || generateId(),
+    year: parseInt(document.getElementById('formTargetYear').value),
+    month: parseInt(document.getElementById('formTargetMonth').value),
+    targetAmount: parseFloat(document.getElementById('formTargetAmount').value) || 0,
+    currency: 'THB'
+  };
+  google.script.run.withSuccessHandler(function() {
+    closeFormModal();
+    navigate('salesTargets');
+    showToast(t('saveSuccess'), 'success');
+  }).saveSalesTarget(data);
+}
+
+function deleteSalesTarget(id) {
+  google.script.run.deleteSalesTarget(id);
+  app.data.salesTargets = app.data.salesTargets.filter(function(t) { return t.id !== id; });
+  navigate('salesTargets');
+}
+
+// ============================================================
+// USERS PAGE (Admin only)
+// ============================================================
+function renderUsersPage() {
+  if (app.user.role !== 'admin') {
+    document.getElementById('pageContent').innerHTML = '<div class="empty-state"><p>Access Denied</p></div>';
+    return;
+  }
+
+  setHeaderTitle(t('usersTitle'));
+  document.getElementById('pageContent').innerHTML = \`
+    <div class="page-header">
+      <h2>${t('usersTitle')}</h2>
+      <button class="btn btn-primary" onclick="showUserForm()">➕ ${t('addUser')}</button>
+    </div>
+    <div id="usersList"></div>
+  \`;
+
+  google.script.run.withSuccessHandler(function(users) {
+    app.data.users = users;
+    var html = \`<div class="table-container"><table>
+      <thead><tr><th>${t('name')}</th><th>${t('email')}</th><th>${t('role')}</th><th>${t('actions')}</th></tr></thead>
+      <tbody>\${users.map(function(u) {
+        return \`<tr><td><strong>\${u.name}</strong></td><td>\${u.email}</td><td><span class="badge badge-blue">\${t('role' + capitalizeFirst(u.role))}</span></td>
+        <td><div class="table-actions"><button class="btn btn-sm btn-secondary" onclick="showUserForm('\${u.id}')">✏️</button></div></td></tr>\`;
+      }).join('')}</tbody>
+    </table></div>\`;
+    document.getElementById('usersList').innerHTML = html;
+  }).getUsers();
+}
+
+function showUserForm(id) {
+  app.editingId = id;
+  var user = id ? app.data.users.find(function(u) { return u.id === id; }) : {};
+
+  var html = \`
+    <div class="form-group">
+      <label class="form-label">${t('name')} <span class="required">*</span></label>
+      <input type="text" class="form-control" id="formUserName" value="\${user.name || ''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">${t('email')} <span class="required">*</span></label>
+      <input type="email" class="form-control" id="formUserEmail" value="\${user.email || ''}" \${id ? 'readonly' : ''}>
+    </div>
+    <div class="form-group">
+      <label class="form-label">${t('role')}</label>
+      <select class="form-control" id="formUserRole">
+        <option value="admin" \${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+        <option value="manager" \${user.role === 'manager' ? 'selected' : ''}>Manager</option>
+        <option value="sales" \${user.role === 'sales' ? 'selected' : ''}>Sales</option>
+      </select>
+    </div>
+  \`;
+
+  document.getElementById('formModalTitle').textContent = id ? t('editUser') : t('addUser');
+  document.getElementById('formModalBody').innerHTML = html;
+  document.getElementById('formModal').classList.add('open');
+}
+
+function submitUserForm() {
+  var data = {
+    id: app.editingId || generateId(),
+    name: document.getElementById('formUserName').value,
+    email: document.getElementById('formUserEmail').value,
+    role: document.getElementById('formUserRole').value
+  };
+  google.script.run.withSuccessHandler(function() {
+    closeFormModal();
+    navigate('users');
+    showToast(t('saveSuccess'), 'success');
+  }).saveUser(data);
+}
+
+// ============================================================
+// UI Helpers
+// ============================================================
+
+function setHeaderTitle(title) {
+  document.getElementById('headerTitle').textContent = title;
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+function closeFormModal() {
+  document.getElementById('formModal').classList.remove('open');
+  app.editingId = null;
+}
+
+function showConfirm(message, callback) {
+  document.getElementById('confirmMessage').textContent = message;
+  document.getElementById('confirmOkBtn').onclick = callback;
+  document.getElementById('confirmModal').classList.add('open');
+}
+
+function closeConfirm() {
+  document.getElementById('confirmModal').classList.remove('open');
+}
+
+function showToast(message, type) {
+  var toast = document.createElement('div');
+  toast.className = 'toast ' + (type || 'info');
+  toast.textContent = message;
+  document.getElementById('toastContainer').appendChild(toast);
+  setTimeout(function() { toast.remove(); }, 3000);
+}
+
+function showSetupInfo() {
+  var html = \`
+    <div style="background:#f0f4ff;padding:16px;border-radius:8px;margin-bottom:16px">
+      <p style="font-size:13px;color:#1a73e8"><strong>📋 Google Apps Script Web App</strong></p>
+      <p style="font-size:12px;color:#5f6368;margin-top:8px">このアプリは、Google Spreadsheetをデータベースとして使用します。最初に1回だけ、下のボタンをクリックしてスプレッドシートを作成してください。</p>
+    </div>
+  \`;
+  document.getElementById('setupModalBody').innerHTML = html;
+  document.getElementById('setupModal').classList.add('open');
+}
+
+function runSetup() {
+  document.getElementById('setupRunBtn').disabled = true;
+  document.getElementById('setupRunBtn').textContent = '🔄 セットアップ中...';
+
+  google.script.run.withSuccessHandler(function(result) {
+    document.getElementById('setupModalBody').innerHTML = \`
+      <div style="background:#e6f4ea;padding:16px;border-radius:8px;border-left:4px solid #137333">
+        <p style="color:#137333;font-weight:600">✅ セットアップが完了しました！</p>
+        <p style="font-size:12px;color:#5f6368;margin-top:8px">スプレッドシート: <a href="\${result.url}" target="_blank" style="color:#1a73e8">ここをクリック</a></p>
+        <p style="font-size:12px;color:#5f6368;margin-top:8px">ID: \${result.spreadsheetId}</p>
+        <p style="font-size:12px;color:#5f6368;margin-top:12px;font-style:italic">ページをリロードしてアプリを再起動してください</p>
+      </div>
+    \`;
+    document.getElementById('setupRunBtn').style.display = 'none';
+  }).withFailureHandler(function(err) {
+    showToast('Error: ' + err.message, 'error');
+    document.getElementById('setupRunBtn').disabled = false;
+    document.getElementById('setupRunBtn').textContent = '🚀 スプレッドシートを作成';
+  }).setupSpreadsheet();
+}
+
+// ============================================================
+// Utility Functions
+// ============================================================
+
+function generateId() {
+  return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  var d = new Date(dateStr);
+  return d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
+}
+
+function formatCurrency(value) {
+  if (!value) return '¥0';
+  return '¥' + Math.round(value).toLocaleString('ja-JP');
+}
+
+function capitalizeFirst(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+</script>

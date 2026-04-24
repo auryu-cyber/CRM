@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRM System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <?!= include('Stylesheet'); ?>
+</head>
+<body>
+
+<!-- App Root -->
+<div class="app-wrapper" id="app">
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">C</div>
+      <span class="logo-text" data-i18n="appName">CRM System</span>
+    </div>
+
+    <div class="sidebar-nav" id="sidebarNav">
+      <button class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
+        <span class="nav-icon">📊</span>
+        <span data-i18n="dashboard">ダッシュボード</span>
+      </button>
+      <button class="nav-item" data-page="customers" onclick="navigate('customers')">
+        <span class="nav-icon">🏢</span>
+        <span data-i18n="customers">顧客管理</span>
+      </button>
+      <button class="nav-item" data-page="activities" onclick="navigate('activities')">
+        <span class="nav-icon">📝</span>
+        <span data-i18n="activities">活動履歴</span>
+      </button>
+      <button class="nav-item" data-page="deals" onclick="navigate('deals')">
+        <span class="nav-icon">💼</span>
+        <span data-i18n="deals">案件・商談</span>
+      </button>
+      <button class="nav-item" data-page="tasks" onclick="navigate('tasks')">
+        <span class="nav-icon">✅</span>
+        <span data-i18n="tasks">タスク</span>
+        <span class="nav-badge" id="taskBadge" style="display:none">0</span>
+      </button>
+      <button class="nav-item" data-page="reports" onclick="navigate('reports')">
+        <span class="nav-icon">📈</span>
+        <span data-i18n="reports">レポート</span>
+      </button>
+      <button class="nav-item" data-page="salesTargets" onclick="navigate('salesTargets')">
+        <span class="nav-icon">🎯</span>
+        <span data-i18n="salesTargets">売上目標</span>
+      </button>
+      <button class="nav-item" data-page="users" onclick="navigate('users')" id="navUsers" style="display:none">
+        <span class="nav-icon">👥</span>
+        <span data-i18n="users">ユーザー管理</span>
+      </button>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="showSetupInfo()">
+        <span class="nav-icon">⚙️</span>
+        <span data-i18n="settings">設定</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Header -->
+    <header class="top-header">
+      <button class="header-menu-btn" onclick="toggleSidebar()">☰</button>
+      <h1 class="header-title" id="headerTitle">ダッシュボード</h1>
+
+      <!-- Language Switcher -->
+      <div class="lang-switcher">
+        <button class="lang-tab active" data-lang="ja" onclick="setLang('ja')">JA</button>
+        <button class="lang-tab" data-lang="en" onclick="setLang('en')">EN</button>
+        <button class="lang-tab" data-lang="th" onclick="setLang('th')">TH</button>
+      </div>
+
+      <!-- User Info -->
+      <div class="user-info" id="userInfo">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div>
+          <div class="user-name" id="userName">Loading...</div>
+          <div class="user-role" id="userRole"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content" id="pageContent">
+      <!-- Pages are injected here by JavaScript -->
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <span data-i18n="loading">読み込み中...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal confirm-dialog">
+    <div class="modal-header">
+      <span class="modal-title" id="confirmTitle">確認</span>
+      <button class="modal-close" onclick="closeConfirm()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmMessage"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeConfirm()" data-i18n="cancel">キャンセル</button>
+      <button class="btn btn-danger" id="confirmOkBtn" data-i18n="yes">はい</button>
+    </div>
+  </div>
+</div>
+
+<!-- Generic Form Modal -->
+<div class="modal-overlay" id="formModal">
+  <div class="modal" id="formModalInner">
+    <div class="modal-header">
+      <span class="modal-title" id="formModalTitle"></span>
+      <button class="modal-close" onclick="closeFormModal()">✕</button>
+    </div>
+    <div class="modal-body" id="formModalBody"></div>
+    <div class="modal-footer" id="formModalFooter">
+      <button class="btn btn-secondary" onclick="closeFormModal()" data-i18n="cancel">キャンセル</button>
+      <button class="btn btn-primary" id="formModalSaveBtn" onclick="submitForm()" data-i18n="save">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Setup Info Modal -->
+<div class="modal-overlay" id="setupModal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <span class="modal-title">⚙️ セットアップ / Setup</span>
+      <button class="modal-close" onclick="document.getElementById('setupModal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="setupModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('setupModal').classList.remove('open')">閉じる</button>
+      <button class="btn btn-primary" id="setupRunBtn" onclick="runSetup()">🚀 スプレッドシートを作成</button>
+    </div>
+  </div>
+</div>
+
+<?!= include('i18n'); ?>
+<?!= include('JavaScript'); ?>
+
+<script>
+  // Initialize app with server-side user data
+  var SERVER_USER = <?= JSON.stringify(user) ?>;
+  document.addEventListener('DOMContentLoaded', function() {
+    initApp(SERVER_USER);
+  });
+</script>
+</body>
+</html>
