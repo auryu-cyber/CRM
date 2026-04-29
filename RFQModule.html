@@ -1,0 +1,673 @@
+<script>
+// ============================================================
+// RFQ Module - Split-panel UI
+// Left: RFQ list + filters
+// Right: Import preview OR selected RFQ detail
+// ============================================================
+
+var rfqState = {
+  list: [],
+  filtered: [],
+  selected: null,
+  importPreview: null,
+  rightMode: 'import', // 'import' | 'detail' | 'form'
+  filterStatus: 'all',
+  search: '',
+  importMapping: {}
+};
+
+// ---- RENDER RFQ PAGE (split-panel) ----
+function renderRFQPage() {
+  setHeaderTitle(t('rfqTitle'));
+  document.getElementById('pageContent').innerHTML = `
+    <div id="rfqSplitPanel" class="rfq-split">
+      <!-- LEFT PANEL -->
+      <div class="rfq-left" id="rfqLeft">
+        <div class="rfq-toolbar">
+          <div class="search-bar" style="flex:1">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="rfqSearchInput" placeholder="${t('search')}..."
+              oninput="rfqSearch(this.value)">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="rfqShowForm()">
+            ➕ ${t('addRFQ')}
+          </button>
+        </div>
+
+        <!-- Status filter tabs -->
+        <div class="rfq-status-tabs" id="rfqStatusTabs">
+          ${['all','Open','Quoting','Submitted','Won','Lost'].map(function(s){
+            return `<button class="rfq-stab ${s==='all'?'active':''}"
+              data-status="${s}" onclick="rfqFilterStatus('${s}')">
+              ${t('rfqStatus_'+s)||s}
+              <span class="rfq-stab-count" id="rfqCount_${s}">0</span>
+            </button>`;
+          }).join('')}
+        </div>
+
+        <!-- List -->
+        <div class="rfq-list-body" id="rfqListBody">
+          <div style="text-align:center;padding:40px">
+            <div class="spinner"></div>
+          </div>
+        </div>
+
+        <!-- Footer count -->
+        <div class="rfq-list-footer" id="rfqListFooter"></div>
+      </div>
+
+      <!-- RESIZE HANDLE -->
+      <div class="rfq-divider" id="rfqDivider" title="ドラッグで幅調整"></div>
+
+      <!-- RIGHT PANEL -->
+      <div class="rfq-right" id="rfqRight">
+        <div class="rfq-right-header" id="rfqRightHeader">
+          <span id="rfqRightTitle">${t('importPreview')}</span>
+          <div class="rfq-right-actions" id="rfqRightActions"></div>
+        </div>
+        <div class="rfq-right-body" id="rfqRightBody">
+          <div style="text-align:center;padding:60px 24px;color:#5f6368">
+            <div style="font-size:48px;margin-bottom:16px">📋</div>
+            <p style="font-size:15px;font-weight:600;margin-bottom:8px">${t('importPreviewHint')}</p>
+            <p style="font-size:13px;margin-bottom:24px">${t('importPreviewSub')}</p>
+            <button class="btn btn-primary" onclick="rfqLoadImportPreview()">
+              🔄 ${t('loadSourceData')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  initRFQResize();
+  loadRFQList();
+}
+
+// ---- LOAD RFQ LIST ----
+function loadRFQList() {
+  google.script.run
+    .withSuccessHandler(function(rows) {
+      rfqState.list = rows;
+      rfqApplyFilter();
+    })
+    .withFailureHandler(function(e) { showToast(e.message, 'error'); })
+    .getRFQs({});
+}
+
+// ---- FILTER & RENDER LIST ----
+function rfqSearch(val) {
+  rfqState.search = val;
+  rfqApplyFilter();
+}
+
+function rfqFilterStatus(status) {
+  rfqState.filterStatus = status;
+  document.querySelectorAll('.rfq-stab').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.status === status);
+  });
+  rfqApplyFilter();
+}
+
+function rfqApplyFilter() {
+  var rows = rfqState.list;
+  var q = rfqState.search.toLowerCase();
+
+  if (rfqState.filterStatus !== 'all') {
+    rows = rows.filter(function(r) { return r.status === rfqState.filterStatus; });
+  }
+  if (q) {
+    rows = rows.filter(function(r) {
+      return (r.rfqNumber||'').toLowerCase().indexOf(q) !== -1 ||
+             (r.customerName||'').toLowerCase().indexOf(q) !== -1 ||
+             (r.partName||'').toLowerCase().indexOf(q) !== -1 ||
+             (r.partNumber||'').toLowerCase().indexOf(q) !== -1;
+    });
+  }
+  rfqState.filtered = rows;
+  rfqRenderList(rows);
+  rfqUpdateStatusCounts();
+}
+
+function rfqUpdateStatusCounts() {
+  var all = rfqState.list;
+  ['all','Open','Quoting','Submitted','Won','Lost'].forEach(function(s) {
+    var el = document.getElementById('rfqCount_'+s);
+    if (!el) return;
+    if (s === 'all') { el.textContent = all.length; return; }
+    el.textContent = all.filter(function(r){ return r.status === s; }).length;
+  });
+}
+
+function rfqRenderList(rows) {
+  var el = document.getElementById('rfqListBody');
+  var footer = document.getElementById('rfqListFooter');
+  if (!el) return;
+
+  if (!rows || rows.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <p>${t('noData')}</p>
+    </div>`;
+    footer.textContent = '';
+    return;
+  }
+
+  el.innerHTML = rows.map(function(r) {
+    var sc = rfqStatusColor(r.status);
+    var isSelected = rfqState.selected && rfqState.selected.id === r.id;
+    var amount = r.quotedAmount ? formatCurrency(r.quotedAmount, r.currency) : '-';
+    var imported = r.source === 'imported'
+      ? '<span class="rfq-imported-badge">📥</span>' : '';
+
+    return `<div class="rfq-list-item ${isSelected?'selected':''}"
+        onclick="rfqSelectRow('${r.id}')">
+      <div class="rfq-item-top">
+        <span class="rfq-number">${r.rfqNumber||'-'}</span>
+        ${imported}
+        <span class="badge badge-${sc}" style="margin-left:auto">${t('rfqStatus_'+r.status)||r.status}</span>
+      </div>
+      <div class="rfq-item-customer">🏢 ${r.customerName||'-'}</div>
+      <div class="rfq-item-part">⚙️ ${r.partName||'-'}${r.partNumber?' ('+r.partNumber+')':''}</div>
+      <div class="rfq-item-bottom">
+        <span>📅 ${formatDate(r.requestDate)}</span>
+        <span style="margin-left:auto;font-weight:600">${amount}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  footer.textContent = rows.length + ' ' + t('records');
+}
+
+function rfqStatusColor(status) {
+  var map = {
+    'Open':'blue', 'Quoting':'yellow', 'Submitted':'purple',
+    'Won':'green', 'Lost':'red', 'On Hold':'gray', 'Cancelled':'gray'
+  };
+  return map[status] || 'gray';
+}
+
+// ---- SELECT ROW → show detail on right ----
+function rfqSelectRow(id) {
+  var row = rfqState.list.find(function(r){ return r.id === id; });
+  if (!row) return;
+  rfqState.selected = row;
+  rfqState.rightMode = 'detail';
+
+  // highlight selection
+  document.querySelectorAll('.rfq-list-item').forEach(function(el) {
+    el.classList.toggle('selected', el.onclick && el.onclick.toString().indexOf(id) !== -1);
+  });
+  document.querySelectorAll('.rfq-list-item').forEach(function(el) {
+    el.classList.remove('selected');
+  });
+  var items = document.querySelectorAll('.rfq-list-item');
+  items.forEach(function(el) {
+    if (el.getAttribute('onclick') && el.getAttribute('onclick').indexOf(id) !== -1) {
+      el.classList.add('selected');
+    }
+  });
+
+  rfqRenderDetail(row);
+}
+
+// ---- DETAIL PANEL ----
+function rfqRenderDetail(r) {
+  document.getElementById('rfqRightTitle').textContent = r.rfqNumber || t('rfqDetail');
+
+  document.getElementById('rfqRightActions').innerHTML = `
+    <button class="btn btn-sm btn-secondary" onclick="rfqShowForm('${r.id}')">✏️ ${t('edit')}</button>
+    <button class="btn btn-sm btn-danger" onclick="rfqConfirmDelete('${r.id}')">🗑️</button>
+  `;
+
+  var sc = rfqStatusColor(r.status);
+  document.getElementById('rfqRightBody').innerHTML = `
+    <div class="rfq-detail">
+
+      <!-- Status bar -->
+      <div class="rfq-detail-status">
+        <span class="badge badge-${sc} badge-lg">${t('rfqStatus_'+r.status)||r.status}</span>
+        ${r.source === 'imported' ? '<span class="rfq-imported-badge-lg">📥 インポート済み</span>' : ''}
+      </div>
+
+      <!-- Grid of fields -->
+      <div class="rfq-detail-grid">
+        ${rfqDetailRow('🏢', t('customerName'), r.customerName)}
+        ${rfqDetailRow('🔢', t('rfqNumber'), r.rfqNumber)}
+        ${rfqDetailRow('⚙️', t('partName'), r.partName)}
+        ${rfqDetailRow('🏷️', t('partNumber'), r.partNumber)}
+        ${rfqDetailRow('📦', t('quantity'), (r.quantity||'-') + ' ' + (r.unit||''))}
+        ${rfqDetailRow('📅', t('requestDate'), formatDate(r.requestDate))}
+        ${rfqDetailRow('⏰', t('dueDate'), formatDate(r.dueDate))}
+        ${rfqDetailRow('📝', t('quotedDate'), formatDate(r.quotedDate))}
+        ${rfqDetailRow('💰', t('quotedAmount'), r.quotedAmount ? formatCurrency(r.quotedAmount, r.currency) : '-')}
+        ${rfqDetailRow('👤', t('assignedTo'), r.assignedTo)}
+      </div>
+
+      ${r.notes ? `<div class="rfq-detail-notes">
+        <div class="rfq-detail-label">📋 ${t('notes')}</div>
+        <div class="rfq-detail-note-text">${r.notes}</div>
+      </div>` : ''}
+
+      <!-- Stage progress bar -->
+      <div class="rfq-stage-progress">
+        ${['Open','Quoting','Submitted','Won'].map(function(s, i) {
+          var stages = ['Open','Quoting','Submitted','Won','Lost'];
+          var curIdx = stages.indexOf(r.status);
+          var done = i <= curIdx && r.status !== 'Lost';
+          return `<div class="rfq-stage-step ${done?'done':''} ${r.status===s?'current':''}">
+            <div class="rfq-stage-dot"></div>
+            <div class="rfq-stage-label">${t('rfqStatus_'+s)||s}</div>
+          </div>`;
+        }).join('<div class="rfq-stage-line"></div>')}
+      </div>
+
+      <div class="rfq-detail-meta">
+        <span>作成: ${formatDate(r.createdAt)} by ${r.createdBy||'-'}</span>
+        ${r.updatedAt ? `<span>更新: ${formatDate(r.updatedAt)}</span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function rfqDetailRow(icon, label, value) {
+  return `<div class="rfq-detail-row">
+    <div class="rfq-detail-label">${icon} ${label}</div>
+    <div class="rfq-detail-value">${value || '-'}</div>
+  </div>`;
+}
+
+// ---- IMPORT PREVIEW (右側パネル) ----
+function rfqLoadImportPreview() {
+  document.getElementById('rfqRightTitle').textContent = t('importPreview');
+  document.getElementById('rfqRightActions').innerHTML =
+    `<span style="font-size:12px;color:#5f6368">${t('loadingSource')}</span>`;
+  document.getElementById('rfqRightBody').innerHTML =
+    `<div style="text-align:center;padding:40px"><div class="spinner"></div>
+    <p style="margin-top:12px;color:#5f6368">${t('readingSource')}</p></div>`;
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (!result.success) {
+        rfqShowImportError(result.error);
+        return;
+      }
+      rfqState.importPreview = result;
+      rfqState.importMapping = result.mapping || {};
+      rfqRenderImportPreview(result);
+    })
+    .withFailureHandler(function(e) { rfqShowImportError(e.message); })
+    .previewSourceRFQData();
+}
+
+function rfqShowImportError(msg) {
+  document.getElementById('rfqRightTitle').textContent = t('importError');
+  document.getElementById('rfqRightActions').innerHTML = '';
+  document.getElementById('rfqRightBody').innerHTML = `
+    <div style="padding:24px">
+      <div style="background:#fce8e6;border-left:4px solid #ea4335;padding:16px;border-radius:8px">
+        <p style="color:#c5221f;font-weight:600">❌ ${t('importError')}</p>
+        <p style="font-size:12px;color:#5f6368;margin-top:8px">${msg}</p>
+        <p style="font-size:12px;margin-top:12px">${t('importErrorHint')}</p>
+      </div>
+      <button class="btn btn-secondary" style="margin-top:16px" onclick="rfqLoadImportPreview()">
+        🔄 ${t('retry')}
+      </button>
+    </div>`;
+}
+
+function rfqRenderImportPreview(result) {
+  document.getElementById('rfqRightTitle').textContent =
+    `📥 ${t('importPreview')} (${result.totalRows} ${t('records')})`;
+
+  document.getElementById('rfqRightActions').innerHTML = `
+    <button class="btn btn-success btn-sm" onclick="rfqExecuteImport()">
+      ✅ ${t('importAll')} (${result.totalRows}件)
+    </button>
+  `;
+
+  var headers = result.headers || [];
+  var preview = result.preview || [];
+  var mapping = result.mapping || {};
+
+  // Reverse mapping: colIndex → fieldName
+  var colToField = {};
+  Object.keys(mapping).forEach(function(f) {
+    if (mapping[f] !== undefined) colToField[mapping[f]] = f;
+  });
+
+  document.getElementById('rfqRightBody').innerHTML = `
+    <div class="rfq-import-body">
+      <!-- Source info -->
+      <div class="rfq-import-info">
+        <div class="rfq-import-info-row">
+          <span>📊 ${t('sourceSheet')}:</span>
+          <strong>${result.sheetName}</strong>
+        </div>
+        <div class="rfq-import-info-row">
+          <span>📋 ${t('totalRecords')}:</span>
+          <strong>${result.totalRows} ${t('records')}</strong>
+        </div>
+        <div class="rfq-import-info-row">
+          <span>🗂️ ${t('columns')}:</span>
+          <strong>${headers.length}</strong>
+        </div>
+        <div class="rfq-import-info-row">
+          <span>🔗 ${t('autoMapped')}:</span>
+          <strong>${Object.keys(mapping).length} ${t('fields')}</strong>
+        </div>
+      </div>
+
+      <!-- Column mapping display -->
+      <div class="rfq-mapping-section">
+        <div class="rfq-section-title">🔗 ${t('columnMapping')}</div>
+        <div class="rfq-mapping-grid">
+          ${headers.map(function(h, i) {
+            var field = colToField[i] || '';
+            var mapped = field ? true : false;
+            return `<div class="rfq-mapping-row ${mapped?'mapped':''}">
+              <div class="rfq-mapping-source">${h}</div>
+              <div class="rfq-mapping-arrow">${mapped?'→':'·'}</div>
+              <div class="rfq-mapping-target">${mapped ? t(field)||field : '-'}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Preview table -->
+      <div class="rfq-section-title" style="margin-top:16px">
+        👁️ ${t('previewData')} (${t('first10rows')})
+      </div>
+      <div class="rfq-preview-table-wrap">
+        <table class="rfq-preview-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              ${headers.map(function(h,i) {
+                var field = colToField[i];
+                return `<th title="${field?t(field)||field:''}">
+                  ${h}${field?'<br><small style="color:#34a853">→'+t(field)+'</small>':''}
+                </th>`;
+              }).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${preview.map(function(row, ri) {
+              return `<tr>
+                <td style="color:#5f6368;font-size:11px">${ri+1}</td>
+                ${row.map(function(cell, ci) {
+                  var mapped = colToField[ci];
+                  return `<td class="${mapped?'rfq-mapped-cell':''}">${cell||''}</td>`;
+                }).join('')}
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Import button at bottom -->
+      <div style="padding:16px;text-align:center;border-top:1px solid #dadce0">
+        <button class="btn btn-primary" onclick="rfqExecuteImport()">
+          ✅ ${t('importAll')} (${result.totalRows}件をインポート)
+        </button>
+        <p style="font-size:11px;color:#5f6368;margin-top:8px">${t('importNote')}</p>
+      </div>
+    </div>
+  `;
+}
+
+// ---- EXECUTE IMPORT ----
+function rfqExecuteImport() {
+  if (!confirm(t('confirmImport') + '\n\n' + rfqState.importPreview.totalRows + t('confirmImportRows'))) return;
+
+  document.getElementById('rfqRightActions').innerHTML =
+    `<div class="spinner" style="width:16px;height:16px"></div>
+     <span style="font-size:12px;color:#5f6368;margin-left:8px">${t('importing')}</span>`;
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result.success) {
+        showToast(`✅ ${result.imported}件をインポートしました (スキップ: ${result.skipped}件)`, 'success');
+        loadRFQList();
+        rfqLoadImportPreview();
+      } else {
+        showToast('❌ ' + result.error, 'error');
+      }
+    })
+    .withFailureHandler(function(e) { showToast(e.message, 'error'); })
+    .importRFQFromSource(rfqState.importMapping);
+}
+
+// ---- ADD / EDIT FORM ----
+function rfqShowForm(id) {
+  var row = id ? rfqState.list.find(function(r){ return r.id === id; }) : {};
+  rfqState.rightMode = 'form';
+
+  document.getElementById('rfqRightTitle').textContent = id ? t('editRFQ') : t('addRFQ');
+  document.getElementById('rfqRightActions').innerHTML = `
+    <button class="btn btn-sm btn-secondary" onclick="rfqCancelForm()">✕ ${t('cancel')}</button>
+    <button class="btn btn-sm btn-primary" onclick="rfqSubmitForm()">💾 ${t('save')}</button>
+  `;
+
+  document.getElementById('rfqRightBody').innerHTML = `
+    <div class="rfq-form" id="rfqFormBody">
+      <input type="hidden" id="rfqFormId" value="${row.id||''}">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">${t('rfqNumber')}</label>
+          <input class="form-control" id="rfqF_rfqNumber" value="${row.rfqNumber||''}"
+            placeholder="RFQ-202504-001">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('status')}</label>
+          <select class="form-control" id="rfqF_status">
+            ${['Open','Quoting','Submitted','Won','Lost','On Hold','Cancelled'].map(function(s){
+              return `<option value="${s}" ${(row.status||'Open')===s?'selected':''}>${t('rfqStatus_'+s)||s}</option>`;
+            }).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">${t('customerName')} <span class="required">*</span></label>
+        <input class="form-control" id="rfqF_customerName" value="${row.customerName||''}"
+          placeholder="${t('customerName')}">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">${t('partName')}</label>
+          <input class="form-control" id="rfqF_partName" value="${row.partName||''}"
+            placeholder="${t('partName')}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('partNumber')}</label>
+          <input class="form-control" id="rfqF_partNumber" value="${row.partNumber||''}"
+            placeholder="${t('partNumber')}">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">${t('quantity')}</label>
+          <input class="form-control" type="number" id="rfqF_quantity" value="${row.quantity||''}"
+            placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('unit')}</label>
+          <select class="form-control" id="rfqF_unit">
+            ${['pcs','kg','m','m²','m³','set','lot','box'].map(function(u){
+              return `<option value="${u}" ${(row.unit||'pcs')===u?'selected':''}>${u}</option>`;
+            }).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">${t('requestDate')}</label>
+          <input class="form-control" type="date" id="rfqF_requestDate"
+            value="${row.requestDate||''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('dueDate')}</label>
+          <input class="form-control" type="date" id="rfqF_dueDate"
+            value="${row.dueDate||''}">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">${t('quotedAmount')}</label>
+          <input class="form-control" type="number" id="rfqF_quotedAmount"
+            value="${row.quotedAmount||''}" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('currency')}</label>
+          <select class="form-control" id="rfqF_currency">
+            ${['THB','JPY','USD','EUR','CNY'].map(function(c){
+              return `<option value="${c}" ${(row.currency||'THB')===c?'selected':''}>${c}</option>`;
+            }).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">${t('quotedDate')}</label>
+        <input class="form-control" type="date" id="rfqF_quotedDate"
+          value="${row.quotedDate||''}">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">${t('assignedTo')}</label>
+        <input class="form-control" id="rfqF_assignedTo" value="${row.assignedTo||app.user.email}"
+          placeholder="${t('assignedTo')}">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">${t('notes')}</label>
+        <textarea class="form-control" id="rfqF_notes" rows="3"
+          placeholder="${t('notes')}">${row.notes||''}</textarea>
+      </div>
+    </div>
+  `;
+}
+
+function rfqCancelForm() {
+  if (rfqState.selected) {
+    rfqRenderDetail(rfqState.selected);
+  } else {
+    rfqLoadImportPreview();
+  }
+}
+
+function rfqSubmitForm() {
+  var id = document.getElementById('rfqFormId').value;
+  function fv(fid) {
+    var el = document.getElementById('rfqF_'+fid);
+    return el ? el.value.trim() : '';
+  }
+
+  var customerName = fv('customerName');
+  if (!customerName) { showToast(t('customerRequired'), 'error'); return; }
+
+  var data = {
+    id: id || null,
+    rfqNumber: fv('rfqNumber'),
+    customerName: customerName,
+    partName: fv('partName'),
+    partNumber: fv('partNumber'),
+    quantity: fv('quantity'),
+    unit: fv('unit'),
+    requestDate: fv('requestDate'),
+    dueDate: fv('dueDate'),
+    quotedDate: fv('quotedDate'),
+    quotedAmount: fv('quotedAmount'),
+    currency: fv('currency'),
+    status: fv('status'),
+    assignedTo: fv('assignedTo'),
+    notes: fv('notes')
+  };
+
+  // Disable save button
+  var saveBtn = document.querySelector('[onclick="rfqSubmitForm()"]');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ ' + t('saving'); }
+
+  google.script.run
+    .withSuccessHandler(function() {
+      showToast(t('saveSuccess'), 'success');
+      loadRFQList();
+      // Show detail after save
+      setTimeout(function() {
+        var updated = rfqState.list.find(function(r){ return r.rfqNumber === data.rfqNumber; });
+        if (updated) rfqSelectRow(updated.id);
+      }, 800);
+    })
+    .withFailureHandler(function(e) {
+      showToast(e.message, 'error');
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 ' + t('save'); }
+    })
+    .saveRFQ(data);
+}
+
+// ---- DELETE ----
+function rfqConfirmDelete(id) {
+  showConfirm(t('confirmDelete'), function() {
+    closeConfirm();
+    google.script.run
+      .withSuccessHandler(function() {
+        showToast(t('deleteSuccess'), 'success');
+        rfqState.selected = null;
+        rfqLoadImportPreview();
+        loadRFQList();
+      })
+      .withFailureHandler(function(e){ showToast(e.message,'error'); })
+      .deleteRFQ(id);
+  });
+}
+
+// ---- RESIZE HANDLE (drag to resize panels) ----
+function initRFQResize() {
+  var divider = document.getElementById('rfqDivider');
+  var left = document.getElementById('rfqLeft');
+  var right = document.getElementById('rfqRight');
+  if (!divider || !left || !right) return;
+
+  var dragging = false;
+  var startX, startLeftW;
+
+  divider.addEventListener('mousedown', function(e) {
+    dragging = true;
+    startX = e.clientX;
+    startLeftW = left.offsetWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    var dx = e.clientX - startX;
+    var total = left.parentElement.offsetWidth;
+    var newW = Math.max(280, Math.min(startLeftW + dx, total - 320));
+    left.style.width = newW + 'px';
+    left.style.flex = 'none';
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (dragging) {
+      dragging = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+  });
+}
+
+// ---- CURRENCY FORMAT ----
+function formatCurrency(amount, currency) {
+  var num = parseFloat(amount) || 0;
+  var cur = currency || 'THB';
+  var symbols = { 'JPY':'¥', 'THB':'฿', 'USD':'$', 'EUR':'€', 'CNY':'¥' };
+  var sym = symbols[cur] || '';
+  return sym + num.toLocaleString('ja-JP', {maximumFractionDigits: 0}) + ' ' + cur;
+}
+</script>

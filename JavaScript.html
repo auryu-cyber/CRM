@@ -6,7 +6,7 @@
 // Global state
 var app = {
   user: null,
-  currentPage: 'dashboard',
+  currentPage: 'rfq',
   data: {
     customers: [],
     activities: [],
@@ -40,7 +40,7 @@ function initApp(userData) {
   applyTranslations();
 
   // Load initial data
-  navigate('dashboard');
+  navigate('rfq');
 }
 
 // Navigate to a page
@@ -58,6 +58,7 @@ function navigate(page) {
 
   // Render page
   switch(page) {
+    case 'rfq': renderRFQPage(); break;
     case 'dashboard': renderDashboard(); break;
     case 'customers': renderCustomersPage(); break;
     case 'activities': renderActivitiesPage(); break;
@@ -66,7 +67,13 @@ function navigate(page) {
     case 'reports': renderReportsPage(); break;
     case 'salesTargets': renderSalesTargetsPage(); break;
     case 'users': renderUsersPage(); break;
+    default: renderRFQPage(); break;
   }
+}
+
+// Re-render current page (called after language switch)
+function renderCurrentPage() {
+  navigate(app.currentPage);
 }
 
 // ============================================================
@@ -823,6 +830,11 @@ function closeFormModal() {
   app.editingId = null;
 }
 
+function closeModal(id) {
+  var el = document.getElementById(id);
+  if (el) el.classList.remove('open');
+}
+
 function showConfirm(message, callback) {
   document.getElementById('confirmMessage').textContent = message;
   document.getElementById('confirmOkBtn').onclick = callback;
@@ -841,23 +853,17 @@ function showToast(message, type) {
   setTimeout(function() { toast.remove(); }, 3000);
 }
 
-function showSetupInfo() {
-  var html = \`
-    <div style="background:#f0f4ff;padding:16px;border-radius:8px;margin-bottom:16px">
-      <p style="font-size:13px;color:#1a73e8"><strong>📋 Google Apps Script Web App</strong></p>
-      <p style="font-size:12px;color:#5f6368;margin-top:8px">このアプリは、Google Spreadsheetをデータベースとして使用します。最初に1回だけ、下のボタンをクリックしてスプレッドシートを作成してください。</p>
-    </div>
-  \`;
-  document.getElementById('setupModalBody').innerHTML = html;
+function showSetupModal() {
   document.getElementById('setupModal').classList.add('open');
 }
 
 function runSetup() {
-  document.getElementById('setupRunBtn').disabled = true;
-  document.getElementById('setupRunBtn').textContent = '🔄 セットアップ中...';
+  var btn = document.getElementById('setupBtn');
+  btn.disabled = true;
+  btn.textContent = '🔄 セットアップ中...';
 
   google.script.run.withSuccessHandler(function(result) {
-    document.getElementById('setupModalBody').innerHTML = \`
+    document.getElementById('setupResult').innerHTML = \`
       <div style="background:#e6f4ea;padding:16px;border-radius:8px;border-left:4px solid #137333">
         <p style="color:#137333;font-weight:600">✅ セットアップが完了しました！</p>
         <p style="font-size:12px;color:#5f6368;margin-top:8px">スプレッドシート: <a href="\${result.url}" target="_blank" style="color:#1a73e8">ここをクリック</a></p>
@@ -865,11 +871,11 @@ function runSetup() {
         <p style="font-size:12px;color:#5f6368;margin-top:12px;font-style:italic">ページをリロードしてアプリを再起動してください</p>
       </div>
     \`;
-    document.getElementById('setupRunBtn').style.display = 'none';
+    btn.style.display = 'none';
   }).withFailureHandler(function(err) {
     showToast('Error: ' + err.message, 'error');
-    document.getElementById('setupRunBtn').disabled = false;
-    document.getElementById('setupRunBtn').textContent = '🚀 スプレッドシートを作成';
+    btn.disabled = false;
+    btn.textContent = '🚀 スプレッドシートを作成';
   }).setupSpreadsheet();
 }
 
