@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRM System - Kunomura (Preview)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+
+/* ============================================================
+   CRM System - Stylesheet (RFQ Split-Panel + Responsive)
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --primary:#1a73e8; --primary-dark:#1557b0; --primary-light:#e8f0fe;
+  --green:#137333;   --green-light:#e6f4ea;
+  --yellow:#e37400;  --yellow-light:#fef9e7;
+  --red:#c5221f;     --red-light:#fce8e6;
+  --purple:#6f3fbd;  --purple-light:#f3e8fd;
+  --text:#202124;    --text2:#5f6368;  --border:#dadce0;
+  --bg:#f8f9fa;      --card:#ffffff;
+  --sidebar-w:220px; --header-h:56px;
+  --shadow:0 1px 3px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.08);
+  --shadow-md:0 4px 12px rgba(0,0,0,.15);
+  --radius:8px; --trans:.18s ease;
+}
+
+html,body{height:100%;font-family:'Noto Sans JP','Noto Sans Thai',Arial,sans-serif;
+  font-size:13px;color:var(--text);background:var(--bg);line-height:1.5}
+
+/* ---- LAYOUT ---- */
+.app-wrapper{display:flex;height:100vh;overflow:hidden}
+
+/* ---- SIDEBAR ---- */
+.sidebar{width:var(--sidebar-w);height:100vh;background:var(--card);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  position:fixed;left:0;top:0;z-index:200;transition:transform var(--trans);overflow-y:auto}
+
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:14px 16px;
+  border-bottom:1px solid var(--border);min-height:var(--header-h)}
+.logo-icon{width:30px;height:30px;background:var(--primary);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;flex-shrink:0}
+.logo-text{font-size:14px;font-weight:600;line-height:1.2}
+.logo-sub{font-size:10px;color:var(--text2)}
+
+.sidebar-nav{flex:1;padding:6px 0}
+.nav-section-label{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;
+  letter-spacing:.8px;padding:10px 16px 4px}
+
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;
+  border-radius:0 20px 20px 0;margin-right:10px;color:var(--text2);
+  transition:background var(--trans),color var(--trans);
+  font-size:13px;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.nav-item:hover{background:var(--bg);color:var(--primary)}
+.nav-item.active{background:var(--primary-light);color:var(--primary);font-weight:600}
+.nav-icon{font-size:16px;min-width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;
+  padding:1px 5px;border-radius:10px;font-weight:600}
+.sidebar-footer{border-top:1px solid var(--border);padding:6px 0}
+
+/* ---- MAIN CONTENT ---- */
+.main-content{flex:1;margin-left:var(--sidebar-w);display:flex;flex-direction:column;
+  height:100vh;overflow:hidden}
+
+/* ---- TOP HEADER ---- */
+.top-header{height:var(--header-h);background:var(--card);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;z-index:100}
+.header-menu-btn{display:none;background:none;border:none;font-size:20px;cursor:pointer;
+  color:var(--text2);padding:4px}
+.header-title{font-size:16px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Lang Switcher */
+.lang-switcher{display:flex;gap:2px;background:var(--bg);border-radius:20px;
+  padding:2px;border:1px solid var(--border)}
+.lang-tab{padding:3px 9px;border:none;background:none;border-radius:14px;
+  cursor:pointer;font-size:11px;color:var(--text2);transition:all var(--trans);font-weight:500}
+.lang-tab.active{background:var(--primary);color:#fff;box-shadow:var(--shadow)}
+.lang-tab:hover:not(.active){background:var(--border)}
+
+/* User Info */
+.user-info{display:flex;align-items:center;gap:8px;cursor:pointer;
+  padding:3px 8px;border-radius:20px;transition:background var(--trans)}
+.user-info:hover{background:var(--bg)}
+.user-avatar{width:30px;height:30px;background:var(--primary);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13px}
+.user-name{font-size:12px;font-weight:500}
+.user-role{font-size:10px;color:var(--text2)}
+
+/* ---- PAGE CONTENT ---- */
+.page-content{flex:1;overflow:hidden;display:flex;flex-direction:column}
+
+/* ============================================================
+   RFQ SPLIT PANEL
+   ============================================================ */
+.rfq-split{display:flex;height:100%;overflow:hidden}
+
+/* LEFT PANEL */
+.rfq-left{width:420px;min-width:280px;display:flex;flex-direction:column;
+  border-right:1px solid var(--border);background:var(--card);flex-shrink:0}
+
+.rfq-toolbar{display:flex;align-items:center;gap:8px;padding:10px 12px;
+  border-bottom:1px solid var(--border)}
+.rfq-toolbar .search-bar{flex:1;display:flex;align-items:center;gap:6px;
+  background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:5px 12px}
+.rfq-toolbar .search-bar input{border:none;outline:none;font-size:13px;
+  background:transparent;flex:1;font-family:inherit;color:var(--text)}
+.rfq-toolbar .search-bar .search-icon{color:var(--text2);font-size:14px}
+
+/* Status tabs */
+.rfq-status-tabs{display:flex;overflow-x:auto;border-bottom:1px solid var(--border);
+  background:var(--bg);flex-shrink:0}
+.rfq-stab{padding:7px 12px;border:none;background:none;cursor:pointer;
+  font-size:11px;font-weight:500;color:var(--text2);white-space:nowrap;
+  border-bottom:2px solid transparent;font-family:inherit;
+  transition:color var(--trans),border-color var(--trans)}
+.rfq-stab:hover{color:var(--primary)}
+.rfq-stab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.rfq-stab-count{display:inline-block;background:var(--border);color:var(--text2);
+  font-size:10px;padding:1px 5px;border-radius:8px;margin-left:3px}
+.rfq-stab.active .rfq-stab-count{background:var(--primary-light);color:var(--primary)}
+
+/* RFQ list items */
+.rfq-list-body{flex:1;overflow-y:auto}
+.rfq-list-item{padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;
+  transition:background var(--trans)}
+.rfq-list-item:hover{background:var(--bg)}
+.rfq-list-item.selected{background:var(--primary-light);border-left:3px solid var(--primary)}
+
+.rfq-item-top{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.rfq-number{font-size:12px;font-weight:600;color:var(--primary);font-family:monospace}
+.rfq-imported-badge{font-size:11px;title:"Imported"}
+.rfq-item-customer{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rfq-item-part{font-size:11px;color:var(--text2);margin-bottom:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rfq-item-bottom{display:flex;align-items:center;font-size:11px;color:var(--text2)}
+.rfq-list-footer{padding:6px 14px;font-size:11px;color:var(--text2);
+  background:var(--bg);border-top:1px solid var(--border);flex-shrink:0}
+
+/* RESIZE DIVIDER */
+.rfq-divider{width:4px;cursor:col-resize;background:var(--border);
+  transition:background var(--trans);flex-shrink:0}
+.rfq-divider:hover,.rfq-divider:active{background:var(--primary)}
+
+/* RIGHT PANEL */
+.rfq-right{flex:1;display:flex;flex-direction:column;min-width:320px;overflow:hidden;
+  background:var(--card)}
+.rfq-right-header{display:flex;align-items:center;gap:8px;padding:10px 16px;
+  border-bottom:1px solid var(--border);min-height:46px;flex-shrink:0}
+#rfqRightTitle{font-size:14px;font-weight:600;flex:1;color:var(--text)}
+.rfq-right-actions{display:flex;gap:6px;flex-shrink:0}
+.rfq-right-body{flex:1;overflow-y:auto}
+
+/* Import panel */
+.rfq-import-body{padding:16px}
+.rfq-import-info{background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:12px;margin-bottom:14px}
+.rfq-import-info-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px}
+.rfq-import-info-row span{color:var(--text2)}
+.rfq-import-info-row strong{color:var(--text)}
+.rfq-section-title{font-size:12px;font-weight:600;color:var(--text);
+  margin-bottom:8px;display:flex;align-items:center;gap:6px}
+
+/* Column mapping grid */
+.rfq-mapping-section{margin-bottom:14px}
+.rfq-mapping-grid{display:grid;gap:2px;max-height:180px;overflow-y:auto;
+  border:1px solid var(--border);border-radius:6px;background:var(--bg)}
+.rfq-mapping-row{display:grid;grid-template-columns:1fr 20px 1fr;gap:4px;
+  padding:4px 8px;font-size:11px;align-items:center}
+.rfq-mapping-row.mapped{background:#fff}
+.rfq-mapping-source{color:var(--text2);truncate:true;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rfq-mapping-arrow{text-align:center;color:var(--green);font-weight:700}
+.rfq-mapping-target{color:var(--green);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Preview table */
+.rfq-preview-table-wrap{overflow:auto;max-height:280px;border:1px solid var(--border);
+  border-radius:6px;margin-bottom:14px}
+.rfq-preview-table{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}
+.rfq-preview-table th{background:var(--bg);padding:6px 10px;text-align:left;
+  font-weight:600;color:var(--text2);border-bottom:2px solid var(--border);
+  position:sticky;top:0}
+.rfq-preview-table td{padding:5px 10px;border-bottom:1px solid var(--border);max-width:160px;
+  overflow:hidden;text-overflow:ellipsis}
+.rfq-preview-table tr:hover td{background:var(--bg)}
+.rfq-mapped-cell{background:rgba(52,168,83,.06);color:var(--green)}
+
+/* RFQ Detail */
+.rfq-detail{padding:16px}
+.rfq-detail-status{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.badge-lg{font-size:13px;padding:5px 14px}
+.rfq-imported-badge-lg{font-size:12px;color:var(--text2);background:var(--bg);
+  padding:3px 8px;border-radius:12px;border:1px solid var(--border)}
+.rfq-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.rfq-detail-row{background:var(--bg);border-radius:6px;padding:8px 10px}
+.rfq-detail-label{font-size:10px;color:var(--text2);font-weight:500;margin-bottom:2px}
+.rfq-detail-value{font-size:13px;color:var(--text);font-weight:500;
+  word-break:break-word}
+.rfq-detail-notes{background:var(--bg);border-radius:6px;padding:10px;margin-bottom:14px}
+.rfq-detail-note-text{font-size:12px;color:var(--text);line-height:1.6;white-space:pre-wrap}
+.rfq-detail-meta{font-size:11px;color:var(--text2);margin-top:12px;
+  padding-top:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:3px}
+
+/* Stage progress */
+.rfq-stage-progress{display:flex;align-items:center;margin-bottom:16px;
+  background:var(--bg);border-radius:8px;padding:12px 16px;overflow-x:auto}
+.rfq-stage-step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:60px}
+.rfq-stage-dot{width:14px;height:14px;border-radius:50%;background:var(--border);
+  border:2px solid var(--border);transition:all var(--trans)}
+.rfq-stage-step.done .rfq-stage-dot{background:var(--primary);border-color:var(--primary)}
+.rfq-stage-step.current .rfq-stage-dot{background:#fff;border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-light);width:16px;height:16px}
+.rfq-stage-label{font-size:10px;color:var(--text2);text-align:center;white-space:nowrap}
+.rfq-stage-step.done .rfq-stage-label,.rfq-stage-step.current .rfq-stage-label{color:var(--primary);font-weight:600}
+.rfq-stage-line{flex:1;height:2px;background:var(--border);margin-bottom:18px;min-width:20px}
+
+/* RFQ Form */
+.rfq-form{padding:16px}
+
+/* ---- STANDARD PAGES (non-split) ---- */
+.std-page{padding:20px;max-width:100%;overflow-y:auto;height:100%}
+.page-header{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.page-header h2{font-size:18px;font-weight:600}
+
+/* KPI Grid */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  gap:14px;margin-bottom:18px}
+.kpi-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:16px;display:flex;flex-direction:column;gap:6px}
+.kpi-label{font-size:11px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.kpi-value{font-size:26px;font-weight:700;color:var(--text);line-height:1}
+.kpi-sub{font-size:11px;color:var(--text2)}
+.kpi-icon{font-size:28px;margin-bottom:2px}
+.kpi-card.blue{border-top:3px solid var(--primary)}
+.kpi-card.green{border-top:3px solid var(--green)}
+.kpi-card.yellow{border-top:3px solid var(--yellow)}
+.kpi-card.red{border-top:3px solid var(--red)}
+
+/* Card */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:16px;margin-bottom:14px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text)}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* Progress */
+.progress-bar{height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:var(--primary);border-radius:4px;transition:width .6s ease}
+.progress-fill.green{background:var(--green)}
+.progress-fill.yellow{background:var(--yellow)}
+.progress-fill.red{background:var(--red)}
+
+/* Table */
+.table-container{overflow-x:auto;border-radius:var(--radius);
+  box-shadow:var(--shadow);background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--bg);padding:9px 12px;text-align:left;
+  font-weight:600;color:var(--text2);border-bottom:2px solid var(--border);white-space:nowrap}
+tbody td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--bg)}
+.table-actions{display:flex;gap:5px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:6px;
+  border:none;cursor:pointer;font-size:12px;font-weight:500;
+  transition:all var(--trans);white-space:nowrap;font-family:inherit}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--primary-dark)}
+.btn-secondary{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover:not(:disabled){background:var(--border)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover:not(:disabled){background:#a01915}
+.btn-success{background:var(--green);color:#fff}
+.btn-success:hover:not(:disabled){background:#0d5c2b}
+.btn-sm{padding:4px 9px;font-size:11px}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+
+/* Badges */
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-blue{background:var(--primary-light);color:var(--primary)}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-yellow{background:var(--yellow-light);color:var(--yellow)}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-purple{background:var(--purple-light);color:var(--purple)}
+.badge-gray{background:var(--bg);color:var(--text2)}
+
+/* Forms */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:500;margin-bottom:5px;color:var(--text)}
+.required{color:var(--red);margin-left:2px}
+.form-control{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;
+  font-size:13px;color:var(--text);background:#fff;transition:border-color var(--trans);font-family:inherit}
+.form-control:focus{outline:none;border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(26,115,232,.12)}
+.form-control::placeholder{color:#bbb}
+select.form-control{cursor:pointer}
+textarea.form-control{resize:vertical;min-height:70px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.filters-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.search-bar{display:flex;align-items:center;gap:6px;background:#fff;
+  border:1px solid var(--border);border-radius:20px;padding:5px 12px}
+.search-bar input{border:none;outline:none;font-size:13px;flex:1;font-family:inherit;color:var(--text)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+  opacity:0;pointer-events:none;transition:opacity var(--trans)}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:12px;box-shadow:var(--shadow-md);width:100%;
+  max-width:540px;max-height:90vh;display:flex;flex-direction:column;
+  transform:translateY(20px);transition:transform var(--trans)}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px 12px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:15px;font-weight:600}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;
+  color:var(--text2);padding:3px;border-radius:50%;line-height:1}
+.modal-close:hover{background:var(--bg)}
+.modal-body{padding:18px 20px;overflow-y:auto;flex:1}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);
+  display:flex;justify-content:flex-end;gap:8px}
+
+/* Toast */
+.toast-container{position:fixed;bottom:20px;right:20px;z-index:9999;
+  display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{background:var(--text);color:#fff;padding:10px 16px;border-radius:8px;
+  font-size:12px;box-shadow:var(--shadow-md);display:flex;align-items:center;gap:8px;
+  animation:slideInRight .3s ease;pointer-events:all;max-width:320px}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+.toast.warning{background:var(--yellow)}
+@keyframes slideInRight{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* Spinner */
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);
+  border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Empty state */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text2)}
+.empty-icon{font-size:40px;margin-bottom:10px}
+
+/* Pipeline stages widget */
+.pipeline-stages{display:flex;gap:6px;flex-wrap:wrap}
+.pipeline-stage{flex:1;min-width:70px;text-align:center;padding:10px 6px;
+  background:var(--bg);border-radius:var(--radius);border:1px solid var(--border)}
+.stage-count{font-size:22px;font-weight:700;color:var(--primary)}
+.stage-label{font-size:10px;color:var(--text2);margin-top:2px}
+
+/* ============================================================
+   RESPONSIVE - Tablet (≤1024px)
+   ============================================================ */
+@media (max-width:1024px) {
+  :root{--sidebar-w:200px}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .dash-grid{grid-template-columns:1fr}
+  .rfq-left{width:340px}
+}
+
+/* ============================================================
+   RESPONSIVE - Mobile (≤768px)
+   ============================================================ */
+@media (max-width:768px) {
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0);box-shadow:var(--shadow-md)}
+  .sidebar-overlay.open{display:block}
+  .main-content{margin-left:0}
+  .header-menu-btn{display:block}
+  .user-name,.user-role{display:none}
+  .page-content{padding:0}
+  .std-page{padding:12px}
+  .form-row{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+
+  /* Mobile RFQ: stack panels */
+  .rfq-split{flex-direction:column}
+  .rfq-left{width:100%;height:50%;min-width:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .rfq-right{height:50%}
+  .rfq-divider{display:none}
+
+  .modal{max-width:100%;border-radius:16px 16px 0 0;margin:auto 0 0 0}
+  .modal-overlay{align-items:flex-end}
+  .toast-container{bottom:12px;right:10px;left:10px}
+  .rfq-detail-grid{grid-template-columns:1fr}
+}
+
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#bbb}
+
+  </style>
+</head>
+<body>
+<div class="app-wrapper" id="app">
+
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">K</div>
+      <div>
+        <div class="logo-text" data-i18n="appName">CRM System</div>
+        <div class="logo-sub">Kunomura Co., Ltd.</div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <button class="nav-item" data-page="dashboard" onclick="navigate('dashboard')">
+        <span class="nav-icon">📊</span><span data-i18n="dashboard">ダッシュボード</span>
+      </button>
+      <div class="nav-section-label">営業管理</div>
+      <button class="nav-item active" data-page="rfq" onclick="navigate('rfq')">
+        <span class="nav-icon">📋</span><span data-i18n="rfqTitle">RFQ 管理</span>
+      </button>
+      <button class="nav-item" data-page="customers" onclick="navigate('customers')">
+        <span class="nav-icon">🏢</span><span data-i18n="customers">顧客管理</span>
+      </button>
+      <button class="nav-item" data-page="activities" onclick="navigate('activities')">
+        <span class="nav-icon">📝</span><span data-i18n="activities">活動履歴</span>
+      </button>
+      <button class="nav-item" data-page="deals" onclick="navigate('deals')">
+        <span class="nav-icon">💼</span><span data-i18n="deals">案件・商談</span>
+      </button>
+      <div class="nav-section-label">管理</div>
+      <button class="nav-item" data-page="tasks" onclick="navigate('tasks')">
+        <span class="nav-icon">✅</span><span data-i18n="tasks">タスク</span>
+      </button>
+      <button class="nav-item" data-page="reports" onclick="navigate('reports')">
+        <span class="nav-icon">📈</span><span data-i18n="reports">レポート</span>
+      </button>
+    </div>
+    <div class="sidebar-footer">
+      <div style="padding:10px 14px;font-size:11px;color:#5f6368;background:#fef9e7;margin:8px;border-radius:8px">
+        🔍 <strong>プレビュー版</strong><br>RFQページのみ動作します。
+      </div>
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <header class="top-header">
+      <button class="header-menu-btn" onclick="toggleSidebar()">☰</button>
+      <h1 class="header-title" id="headerTitle">RFQ 管理</h1>
+      <div class="lang-switcher">
+        <button class="lang-tab active" data-lang="ja" onclick="setLang('ja')">JA</button>
+        <button class="lang-tab" data-lang="en" onclick="setLang('en')">EN</button>
+        <button class="lang-tab" data-lang="th" onclick="setLang('th')">TH</button>
+      </div>
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div>
+          <div class="user-name" id="userName">Admin</div>
+          <div class="user-role" id="userRole">管理者</div>
+        </div>
+      </div>
+    </header>
+    <div class="page-content" id="pageContent">
+      <div style="display:flex;align-items:center;justify-content:center;height:400px;gap:12px">
+        <div class="spinner"></div>
+        <span style="color:#5f6368">Loading...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <span class="modal-title" data-i18n="confirm">確認</span>
+      <button class="modal-close" onclick="closeConfirm()">✕</button>
+    </div>
+    <div class="modal-body"><p id="confirmMessage"></p></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeConfirm()" data-i18n="cancel">キャンセル</button>
+      <button class="btn btn-danger" id="confirmOkBtn" data-i18n="yes">はい</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── EMBEDDED RFQ DATA (130 records from source spreadsheet) ──────────────────
+var PREVIEW_DATA = [{"id": "rfq_0001", "rfqNumber": "RFQ-001", "customerName": "Nomura Kasei DIP", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Angle Cap 40L", "partColor": "WHT , BLK", "partNumber": "", "quantity": "50000.00", "unit": "set", "unitPrice": "3.4", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "1.36", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "3.4", "revenuePerMonth": "170000", "gpPerMonth": "68000", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0002", "rfqNumber": "RFQ-002", "customerName": "Nomura Kasei DIP", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Angle Cap 50L", "partColor": "WHT , BLK", "partNumber": "", "quantity": "40000.00", "unit": "set", "unitPrice": "4.2", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "1.68", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "4.2", "revenuePerMonth": "168000", "gpPerMonth": "67200", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0003", "rfqNumber": "RFQ-003", "customerName": "Nomura Kasei DIP", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Coating Hook", "partColor": "Yellow", "partNumber": "", "quantity": "50000.00", "unit": "pcs", "unitPrice": "17", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "2.55", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "17", "revenuePerMonth": "850000", "gpPerMonth": "127500", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0004", "rfqNumber": "RFQ-004", "customerName": "บริษัท เอทีบี เซอร์วิส แอนด์ ซัพพลาย จำกัด", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "END CAP 12.7 RED", "partColor": "RED", "partNumber": "", "quantity": "10000.00", "unit": "pcs", "unitPrice": "0.44", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.15", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.44", "revenuePerMonth": "4400", "gpPerMonth": "1500", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0005", "rfqNumber": "RFQ-005", "customerName": "THAI LUSTER PRODUCTS CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT250-35-24UL", "partColor": "GRN", "partNumber": "", "quantity": "300000.00", "unit": "pcs", "unitPrice": "0.38", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.14", "probability": 80, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.38", "revenuePerMonth": "114000", "gpPerMonth": "42000", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "2025Q3-Q4, promotion price 0.30THB 3 month", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0006", "rfqNumber": "RFQ-006", "customerName": "THAI LUSTER PRODUCTS CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT250-45-26UL1", "partColor": "GRN", "partNumber": "", "quantity": "200000.00", "unit": "pcs", "unitPrice": "0.38", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.14", "probability": 80, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.38", "revenuePerMonth": "76000", "gpPerMonth": "28000", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "2025Q3-Q4, promotion price 0.30THB 3 month", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0007", "rfqNumber": "RFQ-007", "customerName": "THAI LUSTER PRODUCTS CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT250-30-24UL1", "partColor": "GRN", "partNumber": "", "quantity": "50000.00", "unit": "pcs", "unitPrice": "0.32", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.12", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.32", "revenuePerMonth": "16000", "gpPerMonth": "6000", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0008", "rfqNumber": "RFQ-008", "customerName": "THAI LUSTER PRODUCTS CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "SH187 KMZ-14UL1", "partColor": "GRN", "partNumber": "", "quantity": "50000.00", "unit": "pcs", "unitPrice": "0.27", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.1", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.27", "revenuePerMonth": "13500", "gpPerMonth": "5000", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0009", "rfqNumber": "RFQ-009", "customerName": "THAI LUSTER PRODUCTS CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "ST187-30-21UL1", "partColor": "GRN", "partNumber": "", "quantity": "30000.00", "unit": "pcs", "unitPrice": "0", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0010", "rfqNumber": "RFQ-010", "customerName": "THAI LUSTER PRODUCTS CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "SH250 KMZ-17UL1", "partColor": "GRN", "partNumber": "", "quantity": "700000.00", "unit": "pcs", "unitPrice": "0.46", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.17", "probability": 80, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.46", "revenuePerMonth": "322000", "gpPerMonth": "119000", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "2025Q3-Q4", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0011", "rfqNumber": "RFQ-011", "customerName": "THAI LUSTER PRODUCTS CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT250-45-24UL1", "partColor": "GRN", "partNumber": "", "quantity": "3000.00", "unit": "pcs", "unitPrice": "0.38", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.14", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.38", "revenuePerMonth": "1140", "gpPerMonth": "420", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0012", "rfqNumber": "RFQ-012", "customerName": "THAI LUSTER PRODUCTS CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT250-35-26UL1", "partColor": "GRN", "partNumber": "", "quantity": "150000.00", "unit": "pcs", "unitPrice": "0.41", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.15", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.41", "revenuePerMonth": "61500", "gpPerMonth": "22500", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0013", "rfqNumber": "RFQ-013", "customerName": "THAI LUSTER PRODUCTS CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT250-40-26UL1", "partColor": "GRN", "partNumber": "", "quantity": "200000.00", "unit": "pcs", "unitPrice": "0.38", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.14", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.38", "revenuePerMonth": "76000", "gpPerMonth": "28000", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0014", "rfqNumber": "RFQ-014", "customerName": "THAI LUSTER PRODUCTS CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT187-35-21UL1", "partColor": "GRN", "partNumber": "", "quantity": "50000.00", "unit": "pcs", "unitPrice": "0.24", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.09", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.24", "revenuePerMonth": "12000", "gpPerMonth": "4500", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0015", "rfqNumber": "RFQ-015", "customerName": "THAI LUSTER PRODUCTS CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT250-40-24UL1", "partColor": "GRN", "partNumber": "", "quantity": "40000.00", "unit": "pcs", "unitPrice": "0.38", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.14", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.38", "revenuePerMonth": "15200", "gpPerMonth": "5600", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0016", "rfqNumber": "RFQ-016", "customerName": "GALILEI (THAILAND) CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "DIP CAP", "partColor": "RED", "partNumber": "", "quantity": "30000.00", "unit": "pcs", "unitPrice": "0.94", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.94", "revenuePerMonth": "28200", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0017", "rfqNumber": "RFQ-017", "customerName": "SAGINOMIYA (THAILAND)CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP 007", "partColor": "WHITE", "partNumber": "", "quantity": "208333.33", "unit": "pcs", "unitPrice": "0.33", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 30, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.33", "revenuePerMonth": "68749.9989", "gpPerMonth": "0", "currency": "THB", "status": "Open", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0018", "rfqNumber": "RFQ-018", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "TH250KM-14-0.8 UL-B", "partColor": "", "partNumber": "", "quantity": "100000.00", "unit": "pcs", "unitPrice": "0.55", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.55", "revenuePerMonth": "55000", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0019", "rfqNumber": "RFQ-019", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "TH250KM-2UL-G", "partColor": "", "partNumber": "", "quantity": "10000.00", "unit": "pcs", "unitPrice": "", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0020", "rfqNumber": "RFQ-020", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "TH250KMRTV-BCL", "partColor": "", "partNumber": "", "quantity": "10000.00", "unit": "pcs", "unitPrice": "", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0021", "rfqNumber": "RFQ-021", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "TH250KMRTV-BCL", "partColor": "", "partNumber": "", "quantity": "10000.00", "unit": "pcs", "unitPrice": "", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0022", "rfqNumber": "RFQ-022", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "ETOKYODIP-0003", "partColor": "", "partNumber": "", "quantity": "10000.00", "unit": "pcs", "unitPrice": "", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0023", "rfqNumber": "RFQ-023", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "TP110-28UL-G", "partColor": "", "partNumber": "", "quantity": "10000.00", "unit": "pcs", "unitPrice": "", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0024", "rfqNumber": "RFQ-024", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "TP187ES (UL) GRN", "partColor": "", "partNumber": "", "quantity": "10000.00", "unit": "pcs", "unitPrice": "", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0025", "rfqNumber": "RFQ-025", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "TP187ES (UL) GRN", "partColor": "", "partNumber": "", "quantity": "85000.00", "unit": "pcs", "unitPrice": "", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0026", "rfqNumber": "RFQ-026", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NF187-KMZ-14-UL", "partColor": "GRN", "partNumber": "", "quantity": "50000.00", "unit": "pcs", "unitPrice": "0.35", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.13", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.35", "revenuePerMonth": "17500", "gpPerMonth": "6500", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0027", "rfqNumber": "RFQ-027", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NF250-KMZ-17-UL", "partColor": "GRN", "partNumber": "", "quantity": "120000.00", "unit": "pcs", "unitPrice": "0.46", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.17", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.46", "revenuePerMonth": "55200", "gpPerMonth": "20400", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0028", "rfqNumber": "RFQ-028", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT187-20-22UL", "partColor": "GRN", "partNumber": "", "quantity": "10000.00", "unit": "pcs", "unitPrice": "0.34", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.1", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.34", "revenuePerMonth": "3400", "gpPerMonth": "1000", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0029", "rfqNumber": "RFQ-029", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT187-30-21UL", "partColor": "GRN", "partNumber": "", "quantity": "10000.00", "unit": "pcs", "unitPrice": "0.35", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.11", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.35", "revenuePerMonth": "3500", "gpPerMonth": "1100", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0030", "rfqNumber": "RFQ-030", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT187-30-23UL", "partColor": "GRN", "partNumber": "", "quantity": "30000.00", "unit": "pcs", "unitPrice": "0.38", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.13", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.38", "revenuePerMonth": "11400", "gpPerMonth": "3900", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0031", "rfqNumber": "RFQ-031", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT250-30-26UL", "partColor": "GRN", "partNumber": "", "quantity": "50000.00", "unit": "pcs", "unitPrice": "0.4", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.18", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.4", "revenuePerMonth": "20000", "gpPerMonth": "9000", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0032", "rfqNumber": "RFQ-032", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT250-32-24UL", "partColor": "GRN", "partNumber": "", "quantity": "20000.00", "unit": "pcs", "unitPrice": "0.4", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.16", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.4", "revenuePerMonth": "8000", "gpPerMonth": "3200", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0033", "rfqNumber": "RFQ-033", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT250-35-25UL", "partColor": "GRN", "partNumber": "", "quantity": "60000.00", "unit": "pcs", "unitPrice": "0.41", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.18", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.41", "revenuePerMonth": "24600", "gpPerMonth": "10800", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0034", "rfqNumber": "RFQ-034", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT250-35-48UL", "partColor": "GRN", "partNumber": "", "quantity": "60000.00", "unit": "pcs", "unitPrice": "0.44", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.18", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.44", "revenuePerMonth": "26400", "gpPerMonth": "10800", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0035", "rfqNumber": "RFQ-035", "customerName": "JOHOKU (THAILAND) CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT250-40-26 UL", "partColor": "GRN", "partNumber": "", "quantity": "30000.00", "unit": "pcs", "unitPrice": "0.47", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.19", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.47", "revenuePerMonth": "14100", "gpPerMonth": "5700", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0036", "rfqNumber": "RFQ-036", "customerName": "SOUTH STAR CO.,LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Cap 6.35x15x1.3", "partColor": "BLK", "partNumber": "", "quantity": "70000.00", "unit": "pcs", "unitPrice": "0.22", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.09", "probability": 100, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.22", "revenuePerMonth": "15400", "gpPerMonth": "6300", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0037", "rfqNumber": "RFQ-037", "customerName": "SOUTH STAR CO.,LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Cap12.7x15x1.3", "partColor": "BLK", "partNumber": "", "quantity": "30000.00", "unit": "pcs", "unitPrice": "0.4", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.16", "probability": 100, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.4", "revenuePerMonth": "12000", "gpPerMonth": "4800", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0038", "rfqNumber": "RFQ-038", "customerName": "SOUTH STAR CO.,LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Cap 9.52x15x1.3", "partColor": "BLK", "partNumber": "", "quantity": "50000.00", "unit": "pcs", "unitPrice": "0.32", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.13", "probability": 100, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.32", "revenuePerMonth": "16000", "gpPerMonth": "6500", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0039", "rfqNumber": "RFQ-039", "customerName": "SOUTH STAR CO.,LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Cap 15.88x15x1.3", "partColor": "BLK", "partNumber": "", "quantity": "7000.00", "unit": "pcs", "unitPrice": "0.52", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.21", "probability": 100, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.52", "revenuePerMonth": "3640", "gpPerMonth": "1470", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0040", "rfqNumber": "RFQ-040", "customerName": "SOUTH STAR CO.,LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Cap 6.35x15x1.3", "partColor": "GRN", "partNumber": "", "quantity": "60000.00", "unit": "pcs", "unitPrice": "0.22", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.09", "probability": 100, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.22", "revenuePerMonth": "13200", "gpPerMonth": "5400", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0041", "rfqNumber": "RFQ-041", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-002 L", "partColor": "RED", "partNumber": "", "quantity": "6310.00", "unit": "pcs", "unitPrice": "1.53", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "6/9/2025", "quotedAmount": "1.53", "revenuePerMonth": "9654.3", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0042", "rfqNumber": "RFQ-042", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-002 L", "partColor": "BLK", "partNumber": "", "quantity": "5000.00", "unit": "pcs", "unitPrice": "1.53", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "1.53", "revenuePerMonth": "7650", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0043", "rfqNumber": "RFQ-043", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-002 L", "partColor": "YEL", "partNumber": "", "quantity": "2103.00", "unit": "pcs", "unitPrice": "1.53", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "1.53", "revenuePerMonth": "3217.59", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0044", "rfqNumber": "RFQ-044", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-002 L", "partColor": "BLUE", "partNumber": "", "quantity": "2103.00", "unit": "pcs", "unitPrice": "1.53", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "6/11/2025", "quotedAmount": "1.53", "revenuePerMonth": "3217.59", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0045", "rfqNumber": "RFQ-045", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-002 L", "partColor": "GREEN", "partNumber": "", "quantity": "2103.00", "unit": "pcs", "unitPrice": "1.53", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "6/11/2025", "quotedAmount": "1.53", "revenuePerMonth": "3217.59", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0046", "rfqNumber": "RFQ-046", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-002 L", "partColor": "WHITE", "partNumber": "", "quantity": "2103.00", "unit": "pcs", "unitPrice": "1.53", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "6/11/2025", "quotedAmount": "1.53", "revenuePerMonth": "3217.59", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0047", "rfqNumber": "RFQ-047", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-006 M", "partColor": "RED", "partNumber": "", "quantity": "3875.00", "unit": "pcs", "unitPrice": "1.53", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "1.53", "revenuePerMonth": "5928.75", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0048", "rfqNumber": "RFQ-048", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-006 M", "partColor": "BLK", "partNumber": "", "quantity": "3875.00", "unit": "pcs", "unitPrice": "0.97", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "6/11/2025", "quotedAmount": "0.97", "revenuePerMonth": "3758.75", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0049", "rfqNumber": "RFQ-049", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-006 M", "partColor": "YEL", "partNumber": "", "quantity": "1292.00", "unit": "pcs", "unitPrice": "0.97", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.97", "revenuePerMonth": "1253.24", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0050", "rfqNumber": "RFQ-050", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-006 M", "partColor": "BLUE", "partNumber": "", "quantity": "1292.00", "unit": "pcs", "unitPrice": "0.97", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.97", "revenuePerMonth": "1253.24", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0051", "rfqNumber": "RFQ-051", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-006 M", "partColor": "GREEN", "partNumber": "", "quantity": "1292.00", "unit": "pcs", "unitPrice": "0.97", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.97", "revenuePerMonth": "1253.24", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0052", "rfqNumber": "RFQ-052", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-006 M", "partColor": "WHITE", "partNumber": "", "quantity": "1292.00", "unit": "pcs", "unitPrice": "0.97", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.97", "revenuePerMonth": "1253.24", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0053", "rfqNumber": "RFQ-053", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-008 S", "partColor": "RED", "partNumber": "", "quantity": "5000.00", "unit": "pcs", "unitPrice": "0.57", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "0.57", "revenuePerMonth": "2850", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0054", "rfqNumber": "RFQ-054", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-008 S", "partColor": "BLK", "partNumber": "", "quantity": "4000.00", "unit": "pcs", "unitPrice": "0.57", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "0.57", "revenuePerMonth": "2280", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0055", "rfqNumber": "RFQ-055", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-008 S", "partColor": "YEL", "partNumber": "", "quantity": "2000.00", "unit": "pcs", "unitPrice": "0.57", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.57", "revenuePerMonth": "1140", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0056", "rfqNumber": "RFQ-056", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-008 S", "partColor": "BLUE", "partNumber": "", "quantity": "2000.00", "unit": "pcs", "unitPrice": "0.57", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.57", "revenuePerMonth": "1140", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0057", "rfqNumber": "RFQ-057", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-008 S", "partColor": "GREEN", "partNumber": "", "quantity": "2000.00", "unit": "pcs", "unitPrice": "0.57", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.57", "revenuePerMonth": "1140", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0058", "rfqNumber": "RFQ-058", "customerName": "SIAM MIYAMA ELECTRIC CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "MJ-008 S", "partColor": "WHITE", "partNumber": "", "quantity": "2000.00", "unit": "pcs", "unitPrice": "0.57", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "6/11/2025", "quotedAmount": "0.57", "revenuePerMonth": "1140", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "7000-10,000 meter/month send forecast Jun 2025", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0059", "rfqNumber": "RFQ-059", "customerName": "FUSO INDUSTRIES THAILAND CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP1.7x20x0.7 (Black)", "partColor": "BLK", "partNumber": "", "quantity": "15000.00", "unit": "pcs", "unitPrice": "0.12", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 80, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.12", "revenuePerMonth": "1800", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0060", "rfqNumber": "RFQ-060", "customerName": "FUSO INDUSTRIES THAILAND CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP3.5x15x0.8 (Black)", "partColor": "BLK", "partNumber": "", "quantity": "8333.00", "unit": "pcs", "unitPrice": "0.15", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 80, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.15", "revenuePerMonth": "1249.95", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0061", "rfqNumber": "RFQ-061", "customerName": "FUSO INDUSTRIES THAILAND CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP4.5x15x1.0 (Black)", "partColor": "BLK", "partNumber": "", "quantity": "20833.33", "unit": "pcs", "unitPrice": "0.21", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "0.21", "revenuePerMonth": "4374.9993", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0062", "rfqNumber": "RFQ-062", "customerName": "FUSO INDUSTRIES THAILAND CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP5.0x15x1.0 (Black)", "partColor": "BLK", "partNumber": "", "quantity": "14000.00", "unit": "pcs", "unitPrice": "0.23", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "0.23", "revenuePerMonth": "3220", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0063", "rfqNumber": "RFQ-063", "customerName": "FUSO INDUSTRIES THAILAND CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP6.0x15x1.0 (BLK)", "partColor": "BLK", "partNumber": "", "quantity": "6700.00", "unit": "pcs", "unitPrice": "0.27", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "0.27", "revenuePerMonth": "1809", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0064", "rfqNumber": "RFQ-064", "customerName": "FUSO INDUSTRIES THAILAND CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP8.0x15x1.0 (Black)", "partColor": "BLK", "partNumber": "", "quantity": "15000.00", "unit": "pcs", "unitPrice": "0.33", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "0.33", "revenuePerMonth": "4950", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0065", "rfqNumber": "RFQ-065", "customerName": "FUSO INDUSTRIES THAILAND CO.,LTD", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP4.7x15x1.0 (Black)", "partColor": "BLK", "partNumber": "", "quantity": "3333.00", "unit": "pcs", "unitPrice": "0.22", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.22", "revenuePerMonth": "733.26", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0066", "rfqNumber": "RFQ-066", "customerName": "บริษัท พี.ชี. โปรดักส์ อินเตอร์เนชั่นแนล จำกัด", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "BRKT-PS-Hose BLK (Coating)", "partColor": "BLK", "partNumber": "", "quantity": "2000.00", "unit": "pcs", "unitPrice": "2", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "2", "revenuePerMonth": "4000", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0067", "rfqNumber": "RFQ-067", "customerName": "ENT (THAILAND) CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP", "partColor": "", "partNumber": "", "quantity": "7000.00", "unit": "pcs", "unitPrice": "10.05", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "10.05", "revenuePerMonth": "70350", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0068", "rfqNumber": "RFQ-068", "customerName": "KMCT (Thailand) Co.,Ltd.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Cap 1.95x11x0.8", "partColor": "Red", "partNumber": "", "quantity": "15000.00", "unit": "pcs", "unitPrice": "0.27", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.27", "revenuePerMonth": "4050", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0069", "rfqNumber": "RFQ-069", "customerName": "KMCT (Thailand) Co.,Ltd.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Cap 1.95x11x0.8", "partColor": "Blue", "partNumber": "", "quantity": "15000.00", "unit": "pcs", "unitPrice": "0.27", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.27", "revenuePerMonth": "4050", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0070", "rfqNumber": "RFQ-070", "customerName": "KMCT (Thailand) Co.,Ltd.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Cap 2.35x11x0.8", "partColor": "Blue", "partNumber": "", "quantity": "15000.00", "unit": "pcs", "unitPrice": "0.28", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.28", "revenuePerMonth": "4200", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0071", "rfqNumber": "RFQ-071", "customerName": "KMCT (Thailand) Co.,Ltd.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Cap 2.45x11x0.8", "partColor": "Blue", "partNumber": "", "quantity": "10000.00", "unit": "pcs", "unitPrice": "0.3", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.3", "revenuePerMonth": "3000", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0072", "rfqNumber": "RFQ-072", "customerName": "KMCT (Thailand) Co.,Ltd.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Cap 2.9x11x0.8", "partColor": "Blue", "partNumber": "", "quantity": "20000.00", "unit": "pcs", "unitPrice": "0.32", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.32", "revenuePerMonth": "6400", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0073", "rfqNumber": "RFQ-073", "customerName": "Azuma", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "AZUMA RED 3.4 inches Handle", "partColor": "Orange", "partNumber": "", "quantity": "500.00", "unit": "pcs", "unitPrice": "15.8", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "15.8", "revenuePerMonth": "7900", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0074", "rfqNumber": "RFQ-074", "customerName": "Azuma", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "AZUMA RED 2 1/2 \"inches Handle", "partColor": "Orange", "partNumber": "", "quantity": "500.00", "unit": "pcs", "unitPrice": "13.5", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "13.5", "revenuePerMonth": "6750", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0075", "rfqNumber": "RFQ-075", "customerName": "Azuma", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Fujimak Blue 11/2\" inches Handle", "partColor": "Blue", "partNumber": "", "quantity": "500.00", "unit": "pcs", "unitPrice": "11.5", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "11.5", "revenuePerMonth": "5750", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0076", "rfqNumber": "RFQ-076", "customerName": "Azuma", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Fujimak Blue 1\" inches Handle", "partColor": "Blue", "partNumber": "", "quantity": "500.00", "unit": "pcs", "unitPrice": "9.5", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "9.5", "revenuePerMonth": "4750", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0077", "rfqNumber": "RFQ-077", "customerName": "Azuma", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Fujimak Blue 1 1/4\" inches Handle", "partColor": "Blue", "partNumber": "", "quantity": "500.00", "unit": "pcs", "unitPrice": "10.5", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "10.5", "revenuePerMonth": "5250", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0078", "rfqNumber": "RFQ-078", "customerName": "Azuma", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Fujimak Blue 1/2\" inches Handle", "partColor": "Blue", "partNumber": "", "quantity": "500.00", "unit": "pcs", "unitPrice": "8.8", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "8.8", "revenuePerMonth": "4400", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0079", "rfqNumber": "RFQ-079", "customerName": "HOO CHIN ELECTRONICS CO.,LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Kyoei Sleeve for wire harness (for MACO)", "partColor": "", "partNumber": "", "quantity": "", "unit": "pcs", "unitPrice": "", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 10, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Open", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0080", "rfqNumber": "RFQ-080", "customerName": "SEAPS(Thailand)Co.,Ltd.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Conector Covers", "partColor": "", "partNumber": "", "quantity": "2600.00", "unit": "pcs", "unitPrice": "4.3", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "1.591", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "4.3", "revenuePerMonth": "11180", "gpPerMonth": "4136.6", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0081", "rfqNumber": "RFQ-081", "customerName": "SNC ATLANTIC WATER HEATER ASIA CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Caps", "partColor": "", "partNumber": "", "quantity": "", "unit": "pcs", "unitPrice": "", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 10, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Open", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0082", "rfqNumber": "RFQ-082", "customerName": "SEAPS(Thailand)Co.,Ltd.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Dipping", "partColor": "", "partNumber": "", "quantity": "2500.00", "unit": "pcs", "unitPrice": "10.48", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "2.037", "probability": 30, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "10.48", "revenuePerMonth": "26200", "gpPerMonth": "5092.5", "currency": "THB", "status": "Open", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0083", "rfqNumber": "RFQ-083", "customerName": "SDG (THAILAND)  CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Keytainer", "partColor": "Many", "partNumber": "", "quantity": "110.00", "unit": "pcs", "unitPrice": "65", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "6.5", "probability": 100, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "65", "revenuePerMonth": "7150", "gpPerMonth": "715", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0084", "rfqNumber": "RFQ-084", "customerName": "Yoshitake Works (Thailand) LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Big Cap for pump unit", "partColor": "BLK", "partNumber": "", "quantity": "500.00", "unit": "pcs", "unitPrice": "10", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 10, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "10", "revenuePerMonth": "5000", "gpPerMonth": "0", "currency": "THB", "status": "Open", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0085", "rfqNumber": "RFQ-085", "customerName": "Yoshitake Works (Thailand) LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Small cap for pump", "partColor": "RED", "partNumber": "", "quantity": "300.00", "unit": "pcs", "unitPrice": "0.45", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 10, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.45", "revenuePerMonth": "135", "gpPerMonth": "0", "currency": "THB", "status": "Open", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0086", "rfqNumber": "RFQ-086", "customerName": "Khow chua", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Coating , stationaly", "partColor": "Orange", "partNumber": "", "quantity": "2500.00", "unit": "pcs", "unitPrice": "3.3", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.33", "probability": 10, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "3.3", "revenuePerMonth": "8250", "gpPerMonth": "825", "currency": "THB", "status": "Open", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0087", "rfqNumber": "RFQ-087", "customerName": "Khow chua", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Coating , stationaly", "partColor": "Pink", "partNumber": "", "quantity": "2500.00", "unit": "pcs", "unitPrice": "3", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.3", "probability": 10, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "3", "revenuePerMonth": "7500", "gpPerMonth": "750", "currency": "THB", "status": "Open", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0088", "rfqNumber": "RFQ-088", "customerName": "Khow chua", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Coating , stationaly", "partColor": "Sky blue", "partNumber": "", "quantity": "2500.00", "unit": "pcs", "unitPrice": "3", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.3", "probability": 10, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "3", "revenuePerMonth": "7500", "gpPerMonth": "750", "currency": "THB", "status": "Open", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0089", "rfqNumber": "RFQ-089", "customerName": "Khow chua", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Coating , stationaly", "partColor": "Green", "partNumber": "", "quantity": "2500.00", "unit": "pcs", "unitPrice": "3", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "0.3", "probability": 10, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "3", "revenuePerMonth": "7500", "gpPerMonth": "750", "currency": "THB", "status": "Open", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0090", "rfqNumber": "RFQ-090", "customerName": "C.B.TACT (THAILAND) CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "38.5x40x1.08GRY", "partColor": "Grey", "partNumber": "", "quantity": "3000.00", "unit": "pcs", "unitPrice": "4.07", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "4.07", "revenuePerMonth": "12210", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0091", "rfqNumber": "RFQ-091", "customerName": "C.B.TACT (THAILAND) CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "25.5x25x1.05GRY", "partColor": "Grey", "partNumber": "", "quantity": "3000.00", "unit": "pcs", "unitPrice": "1.815", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "1.815", "revenuePerMonth": "5445", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0092", "rfqNumber": "RFQ-092", "customerName": "C.B.TACT (THAILAND) CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "19.0x25x1.03GRY", "partColor": "Grey", "partNumber": "", "quantity": "3000.00", "unit": "pcs", "unitPrice": "1.32", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "1.32", "revenuePerMonth": "3960", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0093", "rfqNumber": "RFQ-093", "customerName": "C.B.TACT (THAILAND) CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "38.5x40x1.08BLK", "partColor": "BLK", "partNumber": "", "quantity": "", "unit": "pcs", "unitPrice": "3.7", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "3.7", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0094", "rfqNumber": "RFQ-094", "customerName": "C.B.TACT (THAILAND) CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "25.5x25x1.05BLK", "partColor": "BLK", "partNumber": "", "quantity": "", "unit": "pcs", "unitPrice": "1.65", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "1.65", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0095", "rfqNumber": "RFQ-095", "customerName": "C.B.TACT (THAILAND) CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "19.0x25x1.03BLK", "partColor": "BLK", "partNumber": "", "quantity": "", "unit": "pcs", "unitPrice": "1.2", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "1.2", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0096", "rfqNumber": "RFQ-096", "customerName": "MSTD ENTERPRISE CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Sleeve", "partColor": "", "partNumber": "", "quantity": "", "unit": "pcs", "unitPrice": "", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 10, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Open", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0097", "rfqNumber": "RFQ-097", "customerName": "KORNKIT", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAPs, Automotive", "partColor": "Miyama Red", "partNumber": "", "quantity": "50.00", "unit": "pcs", "unitPrice": "40", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "40", "revenuePerMonth": "2000", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0098", "rfqNumber": "RFQ-098", "customerName": "GALILEI (THAILAND) CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP", "partColor": "BLK", "partNumber": "", "quantity": "10000.00", "unit": "pcs", "unitPrice": "1", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 10, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "1", "revenuePerMonth": "10000", "gpPerMonth": "0", "currency": "THB", "status": "Open", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0099", "rfqNumber": "RFQ-099", "customerName": "FRIULAIR (THAILAND) CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP", "partColor": "BLK", "partNumber": "", "quantity": "1000.00", "unit": "pcs", "unitPrice": "5.7", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "5.7", "revenuePerMonth": "5700", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0100", "rfqNumber": "RFQ-100", "customerName": "GALILEI (THAILAND) CO., LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP", "partColor": "RED", "partNumber": "", "quantity": "10000.00", "unit": "pcs", "unitPrice": "1.2", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "1.2", "revenuePerMonth": "12000", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0101", "rfqNumber": "RFQ-101", "customerName": "FIRST PRECISION CO.,LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP", "partColor": "BLK", "partNumber": "", "quantity": "50000.00", "unit": "pcs", "unitPrice": "0.25", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.25", "revenuePerMonth": "12500", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0102", "rfqNumber": "RFQ-102", "customerName": "FIRST PRECISION CO.,LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP", "partColor": "BLK", "partNumber": "", "quantity": "50000.00", "unit": "pcs", "unitPrice": "0.27", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.27", "revenuePerMonth": "13500", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0103", "rfqNumber": "RFQ-103", "customerName": "FIRST PRECISION CO.,LTD.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Cap 7.0x15x1.0", "partColor": "BLK", "partNumber": "", "quantity": "50000.00", "unit": "pcs", "unitPrice": "0.17", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.17", "revenuePerMonth": "8500", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0104", "rfqNumber": "RFQ-104", "customerName": "Celeraise (thailand) co. ltd", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT187-45-26 UL", "partColor": "GRN/BLU", "partNumber": "", "quantity": "80000.00", "unit": "pcs", "unitPrice": "0.34", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.34", "revenuePerMonth": "27200", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0105", "rfqNumber": "RFQ-105", "customerName": "Celeraise (thailand) co. ltd", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT187-25-23 UL", "partColor": "GRN/BLU", "partNumber": "", "quantity": "100000.00", "unit": "pcs", "unitPrice": "0.3", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.3", "revenuePerMonth": "30000", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0106", "rfqNumber": "RFQ-106", "customerName": "Celeraise (thailand) co. ltd", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NT250-40-26UL", "partColor": "GRN/BLU", "partNumber": "", "quantity": "20000.00", "unit": "pcs", "unitPrice": "0.44", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.44", "revenuePerMonth": "8800", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0107", "rfqNumber": "RFQ-107", "customerName": "Celeraise (thailand) co. ltd", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "NF250-KMZ-17UL BLU", "partColor": "GRN/BLU", "partNumber": "", "quantity": "80000.00", "unit": "pcs", "unitPrice": "0.47", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "0.47", "revenuePerMonth": "37600", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0108", "rfqNumber": "RFQ-108", "customerName": "Thongchai", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP  25.0x25.0x1.0", "partColor": "BLK", "partNumber": "", "quantity": "10000.00", "unit": "pcs", "unitPrice": "1.5", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "1.5", "revenuePerMonth": "15000", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0109", "rfqNumber": "RFQ-109", "customerName": "USUI INTERNATIONAL CORPORATION (THAILAND) Co., Ltd.", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "CAP 17x20x1.0", "partColor": "BLK", "partNumber": "", "quantity": "38000.00", "unit": "pcs", "unitPrice": "1.48", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "1.48", "revenuePerMonth": "56240", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0110", "rfqNumber": "RFQ-110", "customerName": "YAMASEI THAI CO.,LTD.&#9;&#9;", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Coating  Clamp JHA42-000380-A   (T 2.0)", "partColor": "BLK", "partNumber": "", "quantity": "28506.58", "unit": "pcs", "unitPrice": "2.3", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "2.3", "revenuePerMonth": "65565.134", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0111", "rfqNumber": "RFQ-111", "customerName": "YAMASEI THAI CO.,LTD.&#9;&#9;", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Coating  Bracket JHA41-001020-A  (T 2.0)", "partColor": "BLK", "partNumber": "", "quantity": "28506.58", "unit": "pcs", "unitPrice": "2.3", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "2.3", "revenuePerMonth": "65565.134", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0112", "rfqNumber": "RFQ-112", "customerName": "YAMASEI THAI CO.,LTD.&#9;&#9;", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Coating  Clamp 9046N-1A272-T-THA  (T 2.0)", "partColor": "BLK", "partNumber": "", "quantity": "7743.58", "unit": "pcs", "unitPrice": "3", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "3", "revenuePerMonth": "23230.74", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0113", "rfqNumber": "RFQ-113", "customerName": "Thai Polyethylene Coating", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "PVC Coating Part Handle Basket  (T2.0) (รับ-ส่ง)", "partColor": "BLK", "partNumber": "", "quantity": "1500.00", "unit": "pcs", "unitPrice": "31", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "31", "revenuePerMonth": "46500", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0114", "rfqNumber": "RFQ-114", "customerName": "Thai Polyethylene Coating", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "PVC Coating Part Handle basket  (T2.0) (ส่งอย่างเดียว)", "partColor": "BLK", "partNumber": "", "quantity": "1500.00", "unit": "pcs", "unitPrice": "29", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "29", "revenuePerMonth": "43500", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0115", "rfqNumber": "RFQ-115", "customerName": "LEADER METAL", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "PVC Coating Part Handle Basket  (T2.0) BLK", "partColor": "BLK", "partNumber": "", "quantity": "1500.00", "unit": "pcs", "unitPrice": "33", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "33", "revenuePerMonth": "49500", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0116", "rfqNumber": "RFQ-116", "customerName": "Nomura Kasei DIP", "subcon": "", "productType": "DIPPING", "factory": "LKB", "partName": "Cap Bolt", "partColor": "YEL", "partNumber": "", "quantity": "1800.00", "unit": "pcs", "unitPrice": "4", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "4", "revenuePerMonth": "7200", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0117", "rfqNumber": "RFQ-117", "customerName": "Yukita Asia (Thailand)Co.,Ltd", "subcon": "", "productType": "AppSheet", "factory": "LKB", "partName": "System", "partColor": "", "partNumber": "", "quantity": "1", "unit": "pcs", "unitPrice": "180000.00", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 50, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "180000.00", "revenuePerMonth": "180000", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0118", "rfqNumber": "RFQ-118", "customerName": "YN2-TECH (THAILAND) CO., LTD.", "subcon": "", "productType": "AppSheet", "factory": "LKB", "partName": "Nissen Koki App", "partColor": "", "partNumber": "", "quantity": "1", "unit": "pcs", "unitPrice": "50000.00", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "50000.00", "revenuePerMonth": "50000", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0119", "rfqNumber": "RFQ-119", "customerName": "Koho Precision Bar and Metals Co.,Ltd.", "subcon": "", "productType": "AppSheet", "factory": "LKB", "partName": "Quotation App, Stock App", "partColor": "", "partNumber": "", "quantity": "1", "unit": "pcs", "unitPrice": "170000.00", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "85000", "probability": 80, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "170000.00", "revenuePerMonth": "170000", "gpPerMonth": "85000", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "Final adjustment, complete by 2025Q2", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0120", "rfqNumber": "RFQ-120", "customerName": "HOKUTO(THAILAND)CO., LTD.", "subcon": "", "productType": "AppSheet", "factory": "LKB", "partName": "Tomas tech", "partColor": "", "partNumber": "", "quantity": "", "unit": "pcs", "unitPrice": "", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 100, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0121", "rfqNumber": "RFQ-121", "customerName": "Patana Intercool Co., Ltd.", "subcon": "", "productType": "GASKET", "factory": "LKB", "partName": "Model LS", "partColor": "", "partNumber": "", "quantity": "3300.00", "unit": "pcs", "unitPrice": "73", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "10.95", "probability": 100, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "73", "revenuePerMonth": "240900", "gpPerMonth": "36135", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0122", "rfqNumber": "RFQ-122", "customerName": "Patana Intercool Co., Ltd.", "subcon": "", "productType": "GASKET", "factory": "LKB", "partName": "Model DGB", "partColor": "", "partNumber": "", "quantity": "500", "unit": "pcs", "unitPrice": "76", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "11.4", "probability": 100, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "76", "revenuePerMonth": "38000", "gpPerMonth": "5700", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0123", "rfqNumber": "RFQ-123", "customerName": "Patana Intercool Co., Ltd.", "subcon": "", "productType": "GASKET", "factory": "LKB", "partName": "Model  515x1070 (PTT OR Model)", "partColor": "", "partNumber": "", "quantity": "200", "unit": "pcs", "unitPrice": "63.5", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "9.525", "probability": 100, "requestDate": "2024-01-01", "closedDate": "2024/5/1", "quotedAmount": "63.5", "revenuePerMonth": "12700", "gpPerMonth": "1905", "currency": "THB", "status": "Won", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0124", "rfqNumber": "RFQ-124", "customerName": "Hua Heng Lee Corporation Co., Ltd", "subcon": "", "productType": "MAGNET", "factory": "LKB", "partName": "Gasket roll same profile with Pattana", "partColor": "", "partNumber": "", "quantity": "3000.00", "unit": "pcs", "unitPrice": "22", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "3.52", "probability": 30, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "22", "revenuePerMonth": "66000", "gpPerMonth": "10560", "currency": "THB", "status": "Open", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0125", "rfqNumber": "RFQ-125", "customerName": "OHIZUMI MFG (THAILAND) CO.,LTD", "subcon": "", "productType": "TUBE", "factory": "LKB", "partName": "TUBE (PVC KNURLED P4.2\\*0.5-BLK)", "partColor": "", "partNumber": "", "quantity": "30000.00", "unit": "pcs", "unitPrice": "1.65", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "1.65", "revenuePerMonth": "49500", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "Customer maybe choose normal tube, not knurled.", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0126", "rfqNumber": "RFQ-126", "customerName": "OHIZUMI MFG (THAILAND) CO.,LTD", "subcon": "", "productType": "TUBE", "factory": "LKB", "partName": "TUBE (PVC KNURLED P4.2\\*0.5-BLU)", "partColor": "", "partNumber": "", "quantity": "22000.00", "unit": "pcs", "unitPrice": "1.9", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "1.9", "revenuePerMonth": "41800", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "Customer maybe choose normal tube, not knurled.", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0127", "rfqNumber": "RFQ-127", "customerName": "OHIZUMI MFG (THAILAND) CO.,LTD", "subcon": "", "productType": "TUBE", "factory": "LKB", "partName": "TUBE (PVC KNURLED P4.2\\*0.5-GRY)", "partColor": "", "partNumber": "", "quantity": "17000.00", "unit": "pcs", "unitPrice": "1.88", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "1.88", "revenuePerMonth": "31960", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "Customer maybe choose normal tube, not knurled.", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0128", "rfqNumber": "RFQ-128", "customerName": "OHIZUMI MFG (THAILAND) CO.,LTD", "subcon": "", "productType": "TUBE", "factory": "LKB", "partName": "TUBE (PVC KNURLED P4.2\\*0.5-GRN)", "partColor": "", "partNumber": "", "quantity": "5000.00", "unit": "pcs", "unitPrice": "1.89", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 60, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "1.89", "revenuePerMonth": "9450", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "Customer maybe choose normal tube, not knurled.", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0129", "rfqNumber": "RFQ-129", "customerName": "Thermedez", "subcon": "", "productType": "GASKET", "factory": "LKB", "partName": "", "partColor": "", "partNumber": "", "quantity": "", "unit": "pcs", "unitPrice": "", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 10, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "", "revenuePerMonth": "0", "gpPerMonth": "0", "currency": "THB", "status": "Open", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}, {"id": "rfq_0130", "rfqNumber": "RFQ-130", "customerName": "OHIZUMI MFG (THAILAND) CO.,LTD", "subcon": "", "productType": "TUBE", "factory": "LKB", "partName": "UL3 TUBE 5x6 BLK", "partColor": "", "partNumber": "", "quantity": "34000.00", "unit": "pcs", "unitPrice": "2.38", "unitPriceUnit": "", "grossProfitPct": "", "grossProfit": "", "probability": 80, "requestDate": "2024-01-01", "closedDate": "", "quotedAmount": "2.38", "revenuePerMonth": "80920", "gpPerMonth": "0", "currency": "THB", "status": "Quoting", "assignedTo": "admin@kunomura.com", "notes": "", "source": "imported", "createdAt": "2024-01-01T00:00:00.000Z", "createdBy": "admin@kunomura.com"}];
+</script>
+
+<script>
+
+// ============================================================
+// i18n.html - Translations: Japanese / English / Thai
+// ============================================================
+var I18N = {
+  ja: {
+    appName: 'CRM システム',
+    // Nav
+    dashboard: 'ダッシュボード', customers: '顧客管理', activities: '活動履歴',
+    deals: '案件・商談', tasks: 'タスク', reports: 'レポート',
+    salesTargets: '売上目標', users: 'ユーザー管理', settings: '設定',
+    // Lang
+    lang_ja: '日本語', lang_en: 'English', lang_th: 'ภาษาไทย',
+    // Common
+    save: '保存', cancel: 'キャンセル', delete: '削除', edit: '編集',
+    add: '追加', search: '検索', close: '閉じる', confirm: '確認',
+    yes: 'はい', no: 'いいえ', loading: '読み込み中...', noData: 'データなし',
+    required: '必須', actions: '操作', saving: '保存中...', retry: '再試行',
+    records: '件', fields: 'フィールド', columns: '列数',
+    // RFQ
+    rfqTitle: 'RFQ 管理', rfqDetail: 'RFQ 詳細', rfqList: 'RFQ 一覧',
+    addRFQ: 'RFQ 追加', editRFQ: 'RFQ 編集',
+    rfqNumber: 'RFQ番号', customerName: '顧客名', partName: '品名',
+    partNumber: '品番・型番', partColor: 'カラー', quantity: '数量',
+    unit: '単位', unitPrice: '単価', unitPriceUnit: '単価単位',
+    requestDate: '受付日', dueDate: '回答期限', quotedDate: '見積提出日',
+    quotedAmount: '見積金額', revenuePerMonth: '月間売上見込',
+    currency: '通貨', notes: '備考', assignedTo: '担当者',
+    productType: '製品カテゴリ (BU)', factory: '工場 (FAC)',
+    probability: '確度 (%)', grossProfitPct: 'GP%', grossProfit: 'GP',
+    closedDate: '初回PO予定月',
+    customerRequired: '顧客名は必須です',
+    // RFQ Status
+    rfqStatus_all: 'すべて', rfqStatus_Open: '受付中', rfqStatus_Quoting: '見積中',
+    rfqStatus_Submitted: '提出済', rfqStatus_Won: '受注', rfqStatus_Lost: '失注',
+    rfqStatus_OnHold: '保留', rfqStatus_Cancelled: 'キャンセル',
+    // Import
+    importPreview: 'インポート プレビュー',
+    importPreviewHint: '既存データをインポートして開始',
+    importPreviewSub: '右パネルに既存スプレッドシートのRFQデータが表示されます',
+    loadSourceData: 'ソースデータを読み込む',
+    importAll: 'すべてインポート',
+    importError: 'インポートエラー',
+    importErrorHint: 'Google Apps Scriptにスプレッドシートへのアクセス権限があることを確認してください',
+    loadingSource: 'ソースデータ読み込み中...',
+    readingSource: '既存スプレッドシートを読み込んでいます...',
+    sourceSheet: 'ソースシート', totalRecords: '総レコード数', autoMapped: '自動マッピング済',
+    columnMapping: '列マッピング', previewData: 'データプレビュー', first10rows: '最初の10行',
+    importNote: '重複するRFQ番号はスキップされます',
+    confirmImport: 'データをインポートしますか？',
+    confirmImportRows: '件のデータをインポートします',
+    importing: 'インポート中...',
+    // Dashboard
+    dashboardTitle: 'ダッシュボード', totalCustomers: '顧客数',
+    wonThisMonth: '今月の受注', pipeline: 'パイプライン',
+    overdueTasks: '期限超過', monthlyTarget: '今月の目標',
+    achievement: '達成率', openDeals: '進行中の案件',
+    recentActivities: '最近の活動', dealsByStage: '案件ステージ別',
+    totalRFQs: 'RFQ総数', openRFQs: '受付中RFQ', wonRFQs: '受注RFQ',
+    // Customer
+    companyName: '会社名', contactName: '担当者名', email: 'メール',
+    phone: '電話', industry: '業種', country: '国', status: 'ステータス',
+    // Tasks
+    taskTitle: 'タスク名', dueDate2: '期限', priority: '優先度', taskStatus: 'ステータス',
+    priorityHigh: '高', priorityMedium: '中', priorityLow: '低',
+    taskOpen: '未対応', taskInProgress: '対応中', taskDone: '完了',
+    // Sales Targets
+    year: '年', month: '月', targetAmount: '目標額', actual: '実績', variance: '差異',
+    // Reports
+    winRate: '受注率', totalDeals: '総案件数', wonDeals: '受注件数', topCustomers: '上位顧客',
+    monthlySales: '月別売上',
+    // Users
+    roleAdmin: '管理者', roleManager: 'マネージャー', roleSales: '営業・購買',
+    role: '権限', department: '部署',
+    // Months
+    months: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+    // Messages
+    confirmDelete: 'この項目を削除しますか？この操作は元に戻せません。',
+    saveSuccess: '保存しました', deleteSuccess: '削除しました',
+    errorOccurred: 'エラーが発生しました'
+  },
+
+  en: {
+    appName: 'CRM System',
+    dashboard: 'Dashboard', customers: 'Customers', activities: 'Activities',
+    deals: 'Deals', tasks: 'Tasks', reports: 'Reports',
+    salesTargets: 'Sales Targets', users: 'Users', settings: 'Settings',
+    lang_ja: '日本語', lang_en: 'English', lang_th: 'ภาษาไทย',
+    save: 'Save', cancel: 'Cancel', delete: 'Delete', edit: 'Edit',
+    add: 'Add', search: 'Search', close: 'Close', confirm: 'Confirm',
+    yes: 'Yes', no: 'No', loading: 'Loading...', noData: 'No data',
+    required: 'Required', actions: 'Actions', saving: 'Saving...', retry: 'Retry',
+    records: 'records', fields: 'fields', columns: 'columns',
+    rfqTitle: 'RFQ Management', rfqDetail: 'RFQ Detail', rfqList: 'RFQ List',
+    addRFQ: 'Add RFQ', editRFQ: 'Edit RFQ',
+    rfqNumber: 'RFQ Number', customerName: 'Customer', partName: 'Part Name',
+    partNumber: 'Part No.', partColor: 'Color', quantity: 'Qty / Month',
+    unit: 'Unit', unitPrice: 'Unit Price', unitPriceUnit: 'Price Unit',
+    requestDate: 'Received Date', dueDate: 'Due Date', quotedDate: 'Quote Date',
+    quotedAmount: 'Quote Amount', revenuePerMonth: 'Revenue/Month',
+    currency: 'Currency', notes: 'Notes', assignedTo: 'Assigned To',
+    productType: 'Product Type (BU)', factory: 'Factory (FAC)',
+    probability: 'Probability (%)', grossProfitPct: 'GP%', grossProfit: 'GP',
+    closedDate: '1st PO Month',
+    customerRequired: 'Customer name is required',
+    rfqStatus_all: 'All', rfqStatus_Open: 'Open', rfqStatus_Quoting: 'Quoting',
+    rfqStatus_Submitted: 'Submitted', rfqStatus_Won: 'Won', rfqStatus_Lost: 'Lost',
+    rfqStatus_OnHold: 'On Hold', rfqStatus_Cancelled: 'Cancelled',
+    importPreview: 'Import Preview',
+    importPreviewHint: 'Import existing data to get started',
+    importPreviewSub: 'View and import RFQ data from your existing spreadsheet',
+    loadSourceData: 'Load Source Data',
+    importAll: 'Import All',
+    importError: 'Import Error',
+    importErrorHint: 'Make sure Apps Script has access to the source spreadsheet',
+    loadingSource: 'Loading source data...',
+    readingSource: 'Reading existing spreadsheet...',
+    sourceSheet: 'Source Sheet', totalRecords: 'Total Records', autoMapped: 'Auto-mapped',
+    columnMapping: 'Column Mapping', previewData: 'Preview Data', first10rows: 'first 10 rows',
+    importNote: 'Duplicate RFQ numbers will be skipped',
+    confirmImport: 'Import data?', confirmImportRows: ' records will be imported',
+    importing: 'Importing...',
+    dashboardTitle: 'Dashboard', totalCustomers: 'Customers',
+    wonThisMonth: 'Won This Month', pipeline: 'Pipeline',
+    overdueTasks: 'Overdue Tasks', monthlyTarget: 'Monthly Target',
+    achievement: 'Achievement', openDeals: 'Open Deals',
+    recentActivities: 'Recent Activities', dealsByStage: 'Deals by Stage',
+    totalRFQs: 'Total RFQs', openRFQs: 'Open RFQs', wonRFQs: 'Won RFQs',
+    companyName: 'Company Name', contactName: 'Contact', email: 'Email',
+    phone: 'Phone', industry: 'Industry', country: 'Country', status: 'Status',
+    taskTitle: 'Task', dueDate2: 'Due', priority: 'Priority', taskStatus: 'Status',
+    priorityHigh: 'High', priorityMedium: 'Medium', priorityLow: 'Low',
+    taskOpen: 'Open', taskInProgress: 'In Progress', taskDone: 'Done',
+    year: 'Year', month: 'Month', targetAmount: 'Target', actual: 'Actual', variance: 'Variance',
+    winRate: 'Win Rate', totalDeals: 'Total Deals', wonDeals: 'Won Deals', topCustomers: 'Top Customers',
+    monthlySales: 'Monthly Sales',
+    roleAdmin: 'Admin', roleManager: 'Manager', roleSales: 'Sales / Purchasing',
+    role: 'Role', department: 'Department',
+    months: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    confirmDelete: 'Are you sure you want to delete this? This cannot be undone.',
+    saveSuccess: 'Saved successfully', deleteSuccess: 'Deleted successfully',
+    errorOccurred: 'An error occurred'
+  },
+
+  th: {
+    appName: 'ระบบ CRM',
+    dashboard: 'แดชบอร์ด', customers: 'จัดการลูกค้า', activities: 'ประวัติกิจกรรม',
+    deals: 'ดีล', tasks: 'งาน', reports: 'รายงาน',
+    salesTargets: 'เป้าหมายการขาย', users: 'จัดการผู้ใช้', settings: 'ตั้งค่า',
+    lang_ja: '日本語', lang_en: 'English', lang_th: 'ภาษาไทย',
+    save: 'บันทึก', cancel: 'ยกเลิก', delete: 'ลบ', edit: 'แก้ไข',
+    add: 'เพิ่ม', search: 'ค้นหา', close: 'ปิด', confirm: 'ยืนยัน',
+    yes: 'ใช่', no: 'ไม่', loading: 'กำลังโหลด...', noData: 'ไม่พบข้อมูล',
+    required: 'จำเป็น', actions: 'การดำเนินการ', saving: 'กำลังบันทึก...', retry: 'ลองใหม่',
+    records: 'รายการ', fields: 'ฟิลด์', columns: 'คอลัมน์',
+    rfqTitle: 'จัดการ RFQ', rfqDetail: 'รายละเอียด RFQ', rfqList: 'รายการ RFQ',
+    addRFQ: 'เพิ่ม RFQ', editRFQ: 'แก้ไข RFQ',
+    rfqNumber: 'หมายเลข RFQ', customerName: 'ชื่อลูกค้า', partName: 'ชื่อสินค้า',
+    partNumber: 'รหัสสินค้า', partColor: 'สี', quantity: 'จำนวน/เดือน',
+    unit: 'หน่วย', unitPrice: 'ราคาต่อหน่วย', unitPriceUnit: 'หน่วยราคา',
+    requestDate: 'วันที่รับ', dueDate: 'กำหนดส่ง', quotedDate: 'วันที่เสนอราคา',
+    quotedAmount: 'มูลค่าใบเสนอราคา', revenuePerMonth: 'รายได้/เดือน',
+    currency: 'สกุลเงิน', notes: 'หมายเหตุ', assignedTo: 'ผู้รับผิดชอบ',
+    productType: 'ประเภทสินค้า (BU)', factory: 'โรงงาน (FAC)',
+    probability: 'โอกาส (%)', grossProfitPct: 'GP%', grossProfit: 'GP',
+    closedDate: 'เดือน PO แรก',
+    customerRequired: 'กรุณากรอกชื่อลูกค้า',
+    rfqStatus_all: 'ทั้งหมด', rfqStatus_Open: 'รับใหม่', rfqStatus_Quoting: 'เสนอราคา',
+    rfqStatus_Submitted: 'ส่งแล้ว', rfqStatus_Won: 'ชนะ', rfqStatus_Lost: 'แพ้',
+    rfqStatus_OnHold: 'พัก', rfqStatus_Cancelled: 'ยกเลิก',
+    importPreview: 'ตัวอย่างการนำเข้า',
+    importPreviewHint: 'นำเข้าข้อมูลที่มีอยู่เพื่อเริ่มต้น',
+    importPreviewSub: 'ดูและนำเข้าข้อมูล RFQ จาก Spreadsheet ที่มีอยู่',
+    loadSourceData: 'โหลดข้อมูลต้นทาง',
+    importAll: 'นำเข้าทั้งหมด',
+    importError: 'เกิดข้อผิดพลาดในการนำเข้า',
+    importErrorHint: 'ตรวจสอบว่า Apps Script มีสิทธิ์เข้าถึง Spreadsheet',
+    loadingSource: 'กำลังโหลดข้อมูลต้นทาง...',
+    readingSource: 'กำลังอ่าน Spreadsheet ที่มีอยู่...',
+    sourceSheet: 'ชีตต้นทาง', totalRecords: 'จำนวนรายการทั้งหมด', autoMapped: 'แมปอัตโนมัติ',
+    columnMapping: 'การแมปคอลัมน์', previewData: 'ตัวอย่างข้อมูล', first10rows: '10 แถวแรก',
+    importNote: 'หมายเลข RFQ ที่ซ้ำกันจะถูกข้าม',
+    confirmImport: 'ต้องการนำเข้าข้อมูลหรือไม่?', confirmImportRows: ' รายการจะถูกนำเข้า',
+    importing: 'กำลังนำเข้า...',
+    dashboardTitle: 'แดชบอร์ด', totalCustomers: 'ลูกค้าทั้งหมด',
+    wonThisMonth: 'ชนะเดือนนี้', pipeline: 'ไปป์ไลน์',
+    overdueTasks: 'งานเกินกำหนด', monthlyTarget: 'เป้าหมายเดือนนี้',
+    achievement: 'อัตราความสำเร็จ', openDeals: 'ดีลที่เปิดอยู่',
+    recentActivities: 'กิจกรรมล่าสุด', dealsByStage: 'ดีลตามขั้นตอน',
+    totalRFQs: 'RFQ ทั้งหมด', openRFQs: 'RFQ รับใหม่', wonRFQs: 'RFQ ชนะ',
+    companyName: 'ชื่อบริษัท', contactName: 'ผู้ติดต่อ', email: 'อีเมล',
+    phone: 'โทรศัพท์', industry: 'อุตสาหกรรม', country: 'ประเทศ', status: 'สถานะ',
+    taskTitle: 'ชื่องาน', dueDate2: 'กำหนดส่ง', priority: 'ความสำคัญ', taskStatus: 'สถานะ',
+    priorityHigh: 'สูง', priorityMedium: 'กลาง', priorityLow: 'ต่ำ',
+    taskOpen: 'เปิด', taskInProgress: 'ดำเนินการ', taskDone: 'เสร็จ',
+    year: 'ปี', month: 'เดือน', targetAmount: 'เป้าหมาย', actual: 'จริง', variance: 'ส่วนต่าง',
+    winRate: 'อัตราชนะ', totalDeals: 'ดีลทั้งหมด', wonDeals: 'ดีลที่ชนะ', topCustomers: 'ลูกค้าอันดับต้น',
+    monthlySales: 'ยอดขายรายเดือน',
+    roleAdmin: 'ผู้ดูแลระบบ', roleManager: 'ผู้จัดการ', roleSales: 'ฝ่ายขาย/จัดซื้อ',
+    role: 'บทบาท', department: 'แผนก',
+    months: ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'],
+    confirmDelete: 'ต้องการลบรายการนี้ใช่หรือไม่? ไม่สามารถยกเลิกได้',
+    saveSuccess: 'บันทึกสำเร็จ', deleteSuccess: 'ลบสำเร็จ',
+    errorOccurred: 'เกิดข้อผิดพลาด'
+  }
+};
+
+var currentLang = 'ja';
+
+function t(key) {
+  return (I18N[currentLang] && I18N[currentLang][key] !== undefined)
+    ? I18N[currentLang][key]
+    : (I18N['en'] && I18N['en'][key] !== undefined ? I18N['en'][key] : key);
+}
+
+function setLang(lang) {
+  if (!I18N[lang]) return;
+  currentLang = lang;
+  try { localStorage.setItem('crm_lang', lang); } catch(e){}
+  document.documentElement.lang = lang;
+  applyTranslations();
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+  document.querySelectorAll('.lang-tab').forEach(function(tab) {
+    tab.classList.toggle('active', tab.dataset.lang === currentLang);
+  });
+  if (typeof renderCurrentPage === 'function') renderCurrentPage();
+}
+
+</script>
+
+<script>
+
+// ── MOCK BACKEND (replaces google.script.run) ────────────────────────────────
+var _db = JSON.parse(JSON.stringify(PREVIEW_DATA)); // working copy
+
+function _uuid() {
+  return 'rfq_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
+}
+
+function mockGetRFQs(params) {
+  var rows = _db.slice();
+  if (params && params.status && params.status !== 'all') {
+    rows = rows.filter(function(r){ return r.status === params.status; });
+  }
+  if (params && params.search) {
+    var q = params.search.toLowerCase();
+    rows = rows.filter(function(r){
+      return (r.rfqNumber||'').toLowerCase().indexOf(q) !== -1 ||
+             (r.customerName||'').toLowerCase().indexOf(q) !== -1 ||
+             (r.partName||'').toLowerCase().indexOf(q) !== -1;
+    });
+  }
+  return rows;
+}
+
+function mockSaveRFQ(data) {
+  var idx = _db.findIndex(function(r){ return r.id === data.id; });
+  if (idx !== -1) {
+    _db[idx] = Object.assign({}, _db[idx], data, { updatedAt: new Date().toISOString() });
+  } else {
+    data.id = data.id || _uuid();
+    data.rfqNumber = data.rfqNumber || ('RFQ-' + String(_db.length+1).padStart(3,'0'));
+    data.createdAt = new Date().toISOString();
+    data.source = 'manual';
+    _db.push(data);
+  }
+}
+
+function mockDeleteRFQ(id) {
+  var idx = _db.findIndex(function(r){ return r.id === id; });
+  if (idx !== -1) _db.splice(idx, 1);
+}
+
+function mockPreviewData() {
+  var headers = ['ID','Date','Customer','Subcon','BU','FAC','Item','Color',
+    'UnitPrice','UnitPriceUnit','GP%','GP','Consumption/month',
+    'ConsumptionUnit','Potential%','1stPO_Month','Revenue/month','GP/month','Remark'];
+  var preview = PREVIEW_DATA.slice(0,10).map(function(r){
+    return [r.rfqNumber, r.requestDate, r.customerName, r.subcon||'',
+      r.productType, r.factory, r.partName, r.partColor||'',
+      r.unitPrice||'', r.unitPriceUnit||'', r.grossProfitPct||'', r.grossProfit||'',
+      r.quantity, r.unit, String(r.probability)+'%', r.closedDate||'',
+      r.revenuePerMonth||'', r.gpPerMonth||'', r.notes||''];
+  });
+  var mapping = {
+    rfqNumber:0, requestDate:1, customerName:2, subcon:3,
+    productType:4, factory:5, partName:6, partColor:7,
+    unitPrice:8, grossProfitPct:10, grossProfit:11,
+    quantity:12, consumptionUnit:13, probability:14,
+    closedDate:15, revenuePerMonth:16, gpPerMonth:17, notes:18
+  };
+  return {
+    success: true,
+    sheetName: 'RFQ',
+    headers: headers,
+    preview: preview,
+    totalRows: PREVIEW_DATA.length,
+    mapping: mapping
+  };
+}
+
+</script>
+
+<script>
+
+// ── APP SHELL ──────────────────────────────────────────────────────────────
+var app = {
+  user: { email:'admin@kunomura.com', name:'Admin', role:'admin', lang:'ja' },
+  currentPage: 'rfq',
+  data: {}
+};
+
+function initApp(userData) {
+  app.user = userData || app.user;
+  currentLang = localStorage.getItem('crm_lang') || 'ja';
+  document.getElementById('userName').textContent = app.user.name;
+  document.getElementById('userRole').textContent = t('roleAdmin');
+  document.getElementById('userAvatar').textContent = (app.user.name||'A').charAt(0).toUpperCase();
+  applyTranslations();
+  navigate('rfq');
+}
+
+function navigate(page) {
+  app.currentPage = page;
+  closeSidebar();
+  document.querySelectorAll('.nav-item').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.page === page);
+  });
+  document.getElementById('pageContent').innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:center;height:300px;gap:12px">' +
+    '<div class="spinner"></div><span style="color:#5f6368">Loading...</span></div>';
+  if (page === 'rfq') { renderRFQPage(); }
+  else {
+    document.getElementById('pageContent').innerHTML =
+      '<div class="empty-state" style="padding:60px"><div class="empty-icon">🚧</div>' +
+      '<p style="margin-top:12px">このページはプレビュー版では未実装です</p>' +
+      '<p style="font-size:11px;color:#5f6368;margin-top:6px">Web App デプロイ版で利用可能です</p></div>';
+    setHeaderTitle(t(page) || page);
+  }
+}
+
+function renderCurrentPage() { navigate(app.currentPage); }
+
+function setHeaderTitle(title) {
+  document.getElementById('headerTitle').textContent = title;
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+function showConfirm(message, callback) {
+  document.getElementById('confirmMessage').textContent = message;
+  document.getElementById('confirmOkBtn').onclick = callback;
+  document.getElementById('confirmModal').classList.add('open');
+}
+function closeConfirm() {
+  document.getElementById('confirmModal').classList.remove('open');
+}
+function closeModal(id) {
+  var el = document.getElementById(id); if (el) el.classList.remove('open');
+}
+
+function showToast(message, type) {
+  var toast = document.createElement('div');
+  toast.className = 'toast ' + (type||'info');
+  toast.textContent = message;
+  document.getElementById('toastContainer').appendChild(toast);
+  setTimeout(function(){ toast.remove(); }, 3000);
+}
+
+function generateId() {
+  return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2,9);
+}
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  var d = new Date(dateStr);
+  if (isNaN(d)) return String(dateStr);
+  return d.getFullYear() + '/' +
+    String(d.getMonth()+1).padStart(2,'0') + '/' +
+    String(d.getDate()).padStart(2,'0');
+}
+function capitalizeFirst(str) { return str.charAt(0).toUpperCase() + str.slice(1); }
+
+</script>
+
+<script>
+
+// ============================================================
+// RFQ Module - Split-panel UI
+// Left: RFQ list + filters
+// Right: Import preview OR selected RFQ detail
+// ============================================================
+
+var rfqState = {
+  list: [],
+  filtered: [],
+  selected: null,
+  importPreview: null,
+  rightMode: 'import', // 'import' | 'detail' | 'form'
+  filterStatus: 'all',
+  search: '',
+  importMapping: {}
+};
+
+// ---- RENDER RFQ PAGE (split-panel) ----
+function renderRFQPage() {
+  setHeaderTitle(t('rfqTitle'));
+  document.getElementById('pageContent').innerHTML = `
+    <div id="rfqSplitPanel" class="rfq-split">
+      <!-- LEFT PANEL -->
+      <div class="rfq-left" id="rfqLeft">
+        <div class="rfq-toolbar">
+          <div class="search-bar" style="flex:1">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="rfqSearchInput" placeholder="${t('search')}..."
+              oninput="rfqSearch(this.value)">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="rfqShowForm()">
+            ➕ ${t('addRFQ')}
+          </button>
+        </div>
+
+        <!-- Status filter tabs -->
+        <div class="rfq-status-tabs" id="rfqStatusTabs">
+          ${['all','Open','Quoting','Submitted','Won','Lost'].map(function(s){
+            return `<button class="rfq-stab ${s==='all'?'active':''}"
+              data-status="${s}" onclick="rfqFilterStatus('${s}')">
+              ${t('rfqStatus_'+s)||s}
+              <span class="rfq-stab-count" id="rfqCount_${s}">0</span>
+            </button>`;
+          }).join('')}
+        </div>
+
+        <!-- List -->
+        <div class="rfq-list-body" id="rfqListBody">
+          <div style="text-align:center;padding:40px">
+            <div class="spinner"></div>
+          </div>
+        </div>
+
+        <!-- Footer count -->
+        <div class="rfq-list-footer" id="rfqListFooter"></div>
+      </div>
+
+      <!-- RESIZE HANDLE -->
+      <div class="rfq-divider" id="rfqDivider" title="ドラッグで幅調整"></div>
+
+      <!-- RIGHT PANEL -->
+      <div class="rfq-right" id="rfqRight">
+        <div class="rfq-right-header" id="rfqRightHeader">
+          <span id="rfqRightTitle">${t('importPreview')}</span>
+          <div class="rfq-right-actions" id="rfqRightActions"></div>
+        </div>
+        <div class="rfq-right-body" id="rfqRightBody">
+          <div style="text-align:center;padding:60px 24px;color:#5f6368">
+            <div style="font-size:48px;margin-bottom:16px">📋</div>
+            <p style="font-size:15px;font-weight:600;margin-bottom:8px">${t('importPreviewHint')}</p>
+            <p style="font-size:13px;margin-bottom:24px">${t('importPreviewSub')}</p>
+            <button class="btn btn-primary" onclick="rfqLoadImportPreview()">
+              🔄 ${t('loadSourceData')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  initRFQResize();
+  loadRFQList();
+}
+
+// ---- LOAD RFQ LIST ----
+function loadRFQList() {
+  var rows = mockGetRFQs({});
+  rfqState.list = rows;
+  rfqApplyFilter();
+}
+
+// ---- FILTER & RENDER LIST ----
+function rfqSearch(val) {
+  rfqState.search = val;
+  rfqApplyFilter();
+}
+
+function rfqFilterStatus(status) {
+  rfqState.filterStatus = status;
+  document.querySelectorAll('.rfq-stab').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.status === status);
+  });
+  rfqApplyFilter();
+}
+
+function rfqApplyFilter() {
+  var rows = rfqState.list;
+  var q = rfqState.search.toLowerCase();
+
+  if (rfqState.filterStatus !== 'all') {
+    rows = rows.filter(function(r) { return r.status === rfqState.filterStatus; });
+  }
+  if (q) {
+    rows = rows.filter(function(r) {
+      return (r.rfqNumber||'').toLowerCase().indexOf(q) !== -1 ||
+             (r.customerName||'').toLowerCase().indexOf(q) !== -1 ||
+             (r.partName||'').toLowerCase().indexOf(q) !== -1 ||
+             (r.partNumber||'').toLowerCase().indexOf(q) !== -1;
+    });
+  }
+  rfqState.filtered = rows;
+  rfqRenderList(rows);
+  rfqUpdateStatusCounts();
+}
+
+function rfqUpdateStatusCounts() {
+  var all = rfqState.list;
+  ['all','Open','Quoting','Submitted','Won','Lost'].forEach(function(s) {
+    var el = document.getElementById('rfqCount_'+s);
+    if (!el) return;
+    if (s === 'all') { el.textContent = all.length; return; }
+    el.textContent = all.filter(function(r){ return r.status === s; }).length;
+  });
+}
+
+function rfqRenderList(rows) {
+  var el = document.getElementById('rfqListBody');
+  var footer = document.getElementById('rfqListFooter');
+  if (!el) return;
+
+  if (!rows || rows.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <p>${t('noData')}</p>
+    </div>`;
+    footer.textContent = '';
+    return;
+  }
+
+  el.innerHTML = rows.map(function(r) {
+    var sc = rfqStatusColor(r.status);
+    var isSelected = rfqState.selected && rfqState.selected.id === r.id;
+    var amount = r.quotedAmount ? formatCurrency(r.quotedAmount, r.currency) : '-';
+    var imported = r.source === 'imported'
+      ? '<span class="rfq-imported-badge">📥</span>' : '';
+
+    return `<div class="rfq-list-item ${isSelected?'selected':''}"
+        onclick="rfqSelectRow('${r.id}')">
+      <div class="rfq-item-top">
+        <span class="rfq-number">${r.rfqNumber||'-'}</span>
+        ${imported}
+        <span class="badge badge-${sc}" style="margin-left:auto">${t('rfqStatus_'+r.status)||r.status}</span>
+      </div>
+      <div class="rfq-item-customer">🏢 ${r.customerName||'-'}</div>
+      <div class="rfq-item-part">⚙️ ${r.partName||'-'}${r.partNumber?' ('+r.partNumber+')':''}</div>
+      <div class="rfq-item-bottom">
+        <span>📅 ${formatDate(r.requestDate)}</span>
+        <span style="margin-left:auto;font-weight:600">${amount}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  footer.textContent = rows.length + ' ' + t('records');
+}
+
+function rfqStatusColor(status) {
+  var map = {
+    'Open':'blue', 'Quoting':'yellow', 'Submitted':'purple',
+    'Won':'green', 'Lost':'red', 'On Hold':'gray', 'Cancelled':'gray'
+  };
+  return map[status] || 'gray';
+}
+
+// ---- SELECT ROW → show detail on right ----
+function rfqSelectRow(id) {
+  var row = rfqState.list.find(function(r){ return r.id === id; });
+  if (!row) return;
+  rfqState.selected = row;
+  rfqState.rightMode = 'detail';
+
+  // highlight selection
+  document.querySelectorAll('.rfq-list-item').forEach(function(el) {
+    el.classList.toggle('selected', el.onclick && el.onclick.toString().indexOf(id) !== -1);
+  });
+  document.querySelectorAll('.rfq-list-item').forEach(function(el) {
+    el.classList.remove('selected');
+  });
+  var items = document.querySelectorAll('.rfq-list-item');
+  items.forEach(function(el) {
+    if (el.getAttribute('onclick') && el.getAttribute('onclick').indexOf(id) !== -1) {
+      el.classList.add('selected');
+    }
+  });
+
+  rfqRenderDetail(row);
+}
+
+// ---- DETAIL PANEL ----
+function rfqRenderDetail(r) {
+  document.getElementById('rfqRightTitle').textContent = r.rfqNumber || t('rfqDetail');
+
+  document.getElementById('rfqRightActions').innerHTML = `
+    <button class="btn btn-sm btn-secondary" onclick="rfqShowForm('${r.id}')">✏️ ${t('edit')}</button>
+    <button class="btn btn-sm btn-danger" onclick="rfqConfirmDelete('${r.id}')">🗑️</button>
+  `;
+
+  var sc = rfqStatusColor(r.status);
+  document.getElementById('rfqRightBody').innerHTML = `
+    <div class="rfq-detail">
+
+      <!-- Status bar -->
+      <div class="rfq-detail-status">
+        <span class="badge badge-${sc} badge-lg">${t('rfqStatus_'+r.status)||r.status}</span>
+        ${r.source === 'imported' ? '<span class="rfq-imported-badge-lg">📥 インポート済み</span>' : ''}
+      </div>
+
+      <!-- Grid of fields -->
+      <div class="rfq-detail-grid">
+        ${rfqDetailRow('🏢', t('customerName'), r.customerName)}
+        ${rfqDetailRow('🔢', t('rfqNumber'), r.rfqNumber)}
+        ${rfqDetailRow('⚙️', t('partName'), r.partName)}
+        ${rfqDetailRow('🏷️', t('partNumber'), r.partNumber)}
+        ${rfqDetailRow('📦', t('quantity'), (r.quantity||'-') + ' ' + (r.unit||''))}
+        ${rfqDetailRow('📅', t('requestDate'), formatDate(r.requestDate))}
+        ${rfqDetailRow('⏰', t('dueDate'), formatDate(r.dueDate))}
+        ${rfqDetailRow('📝', t('quotedDate'), formatDate(r.quotedDate))}
+        ${rfqDetailRow('💰', t('quotedAmount'), r.quotedAmount ? formatCurrency(r.quotedAmount, r.currency) : '-')}
+        ${rfqDetailRow('👤', t('assignedTo'), r.assignedTo)}
+      </div>
+
+      ${r.notes ? `<div class="rfq-detail-notes">
+        <div class="rfq-detail-label">📋 ${t('notes')}</div>
+        <div class="rfq-detail-note-text">${r.notes}</div>
+      </div>` : ''}
+
+      <!-- Stage progress bar -->
+      <div class="rfq-stage-progress">
+        ${['Open','Quoting','Submitted','Won'].map(function(s, i) {
+          var stages = ['Open','Quoting','Submitted','Won','Lost'];
+          var curIdx = stages.indexOf(r.status);
+          var done = i <= curIdx && r.status !== 'Lost';
+          return `<div class="rfq-stage-step ${done?'done':''} ${r.status===s?'current':''}">
+            <div class="rfq-stage-dot"></div>
+            <div class="rfq-stage-label">${t('rfqStatus_'+s)||s}</div>
+          </div>`;
+        }).join('<div class="rfq-stage-line"></div>')}
+      </div>
+
+      <div class="rfq-detail-meta">
+        <span>作成: ${formatDate(r.createdAt)} by ${r.createdBy||'-'}</span>
+        ${r.updatedAt ? `<span>更新: ${formatDate(r.updatedAt)}</span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function rfqDetailRow(icon, label, value) {
+  return `<div class="rfq-detail-row">
+    <div class="rfq-detail-label">${icon} ${label}</div>
+    <div class="rfq-detail-value">${value || '-'}</div>
+  </div>`;
+}
+
+// ---- IMPORT PREVIEW (右側パネル) ----
+function rfqLoadImportPreview() {
+  document.getElementById('rfqRightTitle').textContent = t('importPreview');
+  document.getElementById('rfqRightActions').innerHTML =
+    `<span style="font-size:12px;color:#5f6368">${t('loadingSource')}</span>`;
+  document.getElementById('rfqRightBody').innerHTML =
+    `<div style="text-align:center;padding:40px"><div class="spinner"></div>
+    <p style="margin-top:12px;color:#5f6368">${t('readingSource')}</p></div>`;
+
+  var result = mockPreviewData();
+  rfqState.importPreview = result;
+  rfqState.importMapping = result.mapping || {};
+  rfqRenderImportPreview(result);
+}
+
+function rfqShowImportError(msg) {
+  document.getElementById('rfqRightTitle').textContent = t('importError');
+  document.getElementById('rfqRightActions').innerHTML = '';
+  document.getElementById('rfqRightBody').innerHTML = `
+    <div style="padding:24px">
+      <div style="background:#fce8e6;border-left:4px solid #ea4335;padding:16px;border-radius:8px">
+        <p style="color:#c5221f;font-weight:600">❌ ${t('importError')}</p>
+        <p style="font-size:12px;color:#5f6368;margin-top:8px">${msg}</p>
+        <p style="font-size:12px;margin-top:12px">${t('importErrorHint')}</p>
+      </div>
+      <button class="btn btn-secondary" style="margin-top:16px" onclick="rfqLoadImportPreview()">
+        🔄 ${t('retry')}
+      </button>
+    </div>`;
+}
+
+function rfqRenderImportPreview(result) {
+  document.getElementById('rfqRightTitle').textContent =
+    `📥 ${t('importPreview')} (${result.totalRows} ${t('records')})`;
+
+  document.getElementById('rfqRightActions').innerHTML = `
+    <button class="btn btn-success btn-sm" onclick="rfqExecuteImport()">
+      ✅ ${t('importAll')} (${result.totalRows}件)
+    </button>
+  `;
+
+  var headers = result.headers || [];
+  var preview = result.preview || [];
+  var mapping = result.mapping || {};
+
+  // Reverse mapping: colIndex → fieldName
+  var colToField = {};
+  Object.keys(mapping).forEach(function(f) {
+    if (mapping[f] !== undefined) colToField[mapping[f]] = f;
+  });
+
+  document.getElementById('rfqRightBody').innerHTML = `
+    <div class="rfq-import-body">
+      <!-- Source info -->
+      <div class="rfq-import-info">
+        <div class="rfq-import-info-row">
+          <span>📊 ${t('sourceSheet')}:</span>
+          <strong>${result.sheetName}</strong>
+        </div>
+        <div class="rfq-import-info-row">
+          <span>📋 ${t('totalRecords')}:</span>
+          <strong>${result.totalRows} ${t('records')}</strong>
+        </div>
+        <div class="rfq-import-info-row">
+          <span>🗂️ ${t('columns')}:</span>
+          <strong>${headers.length}</strong>
+        </div>
+        <div class="rfq-import-info-row">
+          <span>🔗 ${t('autoMapped')}:</span>
+          <strong>${Object.keys(mapping).length} ${t('fields')}</strong>
+        </div>
+      </div>
+
+      <!-- Column mapping display -->
+      <div class="rfq-mapping-section">
+        <div class="rfq-section-title">🔗 ${t('columnMapping')}</div>
+        <div class="rfq-mapping-grid">
+          ${headers.map(function(h, i) {
+            var field = colToField[i] || '';
+            var mapped = field ? true : false;
+            return `<div class="rfq-mapping-row ${mapped?'mapped':''}">
+              <div class="rfq-mapping-source">${h}</div>
+              <div class="rfq-mapping-arrow">${mapped?'→':'·'}</div>
+              <div class="rfq-mapping-target">${mapped ? t(field)||field : '-'}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Preview table -->
+      <div class="rfq-section-title" style="margin-top:16px">
+        👁️ ${t('previewData')} (${t('first10rows')})
+      </div>
+      <div class="rfq-preview-table-wrap">
+        <table class="rfq-preview-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              ${headers.map(function(h,i) {
+                var field = colToField[i];
+                return `<th title="${field?t(field)||field:''}">
+                  ${h}${field?'<br><small style="color:#34a853">→'+t(field)+'</small>':''}
+                </th>`;
+              }).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${preview.map(function(row, ri) {
+              return `<tr>
+                <td style="color:#5f6368;font-size:11px">${ri+1}</td>
+                ${row.map(function(cell, ci) {
+                  var mapped = colToField[ci];
+                  return `<td class="${mapped?'rfq-mapped-cell':''}">${cell||''}</td>`;
+                }).join('')}
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Import button at bottom -->
+      <div style="padding:16px;text-align:center;border-top:1px solid #dadce0">
+        <button class="btn btn-primary" onclick="rfqExecuteImport()">
+          ✅ ${t('importAll')} (${result.totalRows}件をインポート)
+        </button>
+        <p style="font-size:11px;color:#5f6368;margin-top:8px">${t('importNote')}</p>
+      </div>
+    </div>
+  `;
+}
+
+// ---- EXECUTE IMPORT ----
+function rfqExecuteImport() {
+  if (!confirm(t('confirmImport') + '\n\n' + rfqState.importPreview.totalRows + t('confirmImportRows'))) return;
+
+  document.getElementById('rfqRightActions').innerHTML =
+    `<div class="spinner" style="width:16px;height:16px"></div>
+     <span style="font-size:12px;color:#5f6368;margin-left:8px">${t('importing')}</span>`;
+
+  showToast('✅ データは既にロード済みです (130件)', 'success');
+  loadRFQList();
+}
+
+// ---- ADD / EDIT FORM ----
+function rfqShowForm(id) {
+  var row = id ? rfqState.list.find(function(r){ return r.id === id; }) : {};
+  rfqState.rightMode = 'form';
+
+  document.getElementById('rfqRightTitle').textContent = id ? t('editRFQ') : t('addRFQ');
+  document.getElementById('rfqRightActions').innerHTML = `
+    <button class="btn btn-sm btn-secondary" onclick="rfqCancelForm()">✕ ${t('cancel')}</button>
+    <button class="btn btn-sm btn-primary" onclick="rfqSubmitForm()">💾 ${t('save')}</button>
+  `;
+
+  document.getElementById('rfqRightBody').innerHTML = `
+    <div class="rfq-form" id="rfqFormBody">
+      <input type="hidden" id="rfqFormId" value="${row.id||''}">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">${t('rfqNumber')}</label>
+          <input class="form-control" id="rfqF_rfqNumber" value="${row.rfqNumber||''}"
+            placeholder="RFQ-202504-001">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('status')}</label>
+          <select class="form-control" id="rfqF_status">
+            ${['Open','Quoting','Submitted','Won','Lost','On Hold','Cancelled'].map(function(s){
+              return `<option value="${s}" ${(row.status||'Open')===s?'selected':''}>${t('rfqStatus_'+s)||s}</option>`;
+            }).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">${t('customerName')} <span class="required">*</span></label>
+        <input class="form-control" id="rfqF_customerName" value="${row.customerName||''}"
+          placeholder="${t('customerName')}">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">${t('partName')}</label>
+          <input class="form-control" id="rfqF_partName" value="${row.partName||''}"
+            placeholder="${t('partName')}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('partNumber')}</label>
+          <input class="form-control" id="rfqF_partNumber" value="${row.partNumber||''}"
+            placeholder="${t('partNumber')}">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">${t('quantity')}</label>
+          <input class="form-control" type="number" id="rfqF_quantity" value="${row.quantity||''}"
+            placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('unit')}</label>
+          <select class="form-control" id="rfqF_unit">
+            ${['pcs','kg','m','m²','m³','set','lot','box'].map(function(u){
+              return `<option value="${u}" ${(row.unit||'pcs')===u?'selected':''}>${u}</option>`;
+            }).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">${t('requestDate')}</label>
+          <input class="form-control" type="date" id="rfqF_requestDate"
+            value="${row.requestDate||''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('dueDate')}</label>
+          <input class="form-control" type="date" id="rfqF_dueDate"
+            value="${row.dueDate||''}">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">${t('quotedAmount')}</label>
+          <input class="form-control" type="number" id="rfqF_quotedAmount"
+            value="${row.quotedAmount||''}" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">${t('currency')}</label>
+          <select class="form-control" id="rfqF_currency">
+            ${['THB','JPY','USD','EUR','CNY'].map(function(c){
+              return `<option value="${c}" ${(row.currency||'THB')===c?'selected':''}>${c}</option>`;
+            }).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">${t('quotedDate')}</label>
+        <input class="form-control" type="date" id="rfqF_quotedDate"
+          value="${row.quotedDate||''}">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">${t('assignedTo')}</label>
+        <input class="form-control" id="rfqF_assignedTo" value="${row.assignedTo||app.user.email}"
+          placeholder="${t('assignedTo')}">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">${t('notes')}</label>
+        <textarea class="form-control" id="rfqF_notes" rows="3"
+          placeholder="${t('notes')}">${row.notes||''}</textarea>
+      </div>
+    </div>
+  `;
+}
+
+function rfqCancelForm() {
+  if (rfqState.selected) {
+    rfqRenderDetail(rfqState.selected);
+  } else {
+    rfqLoadImportPreview();
+  }
+}
+
+function rfqSubmitForm() {
+  var id = document.getElementById('rfqFormId').value;
+  function fv(fid) {
+    var el = document.getElementById('rfqF_'+fid);
+    return el ? el.value.trim() : '';
+  }
+
+  var customerName = fv('customerName');
+  if (!customerName) { showToast(t('customerRequired'), 'error'); return; }
+
+  var data = {
+    id: id || null,
+    rfqNumber: fv('rfqNumber'),
+    customerName: customerName,
+    partName: fv('partName'),
+    partNumber: fv('partNumber'),
+    quantity: fv('quantity'),
+    unit: fv('unit'),
+    requestDate: fv('requestDate'),
+    dueDate: fv('dueDate'),
+    quotedDate: fv('quotedDate'),
+    quotedAmount: fv('quotedAmount'),
+    currency: fv('currency'),
+    status: fv('status'),
+    assignedTo: fv('assignedTo'),
+    notes: fv('notes')
+  };
+
+  // Disable save button
+  var saveBtn = document.querySelector('[onclick="rfqSubmitForm()"]');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ ' + t('saving'); }
+
+  mockSaveRFQ(data);
+  showToast(t('saveSuccess'), 'success');
+  loadRFQList();
+  setTimeout(function() {
+    var updated = rfqState.list.find(function(r){ return r.rfqNumber === data.rfqNumber; });
+    if (updated) rfqSelectRow(updated.id);
+  }, 200);
+}
+
+// ---- DELETE ----
+function rfqConfirmDelete(id) {
+  showConfirm(t('confirmDelete'), function() {
+    closeConfirm();
+    mockDeleteRFQ(id);
+    showToast(t('deleteSuccess'), 'success');
+    rfqState.selected = null;
+    document.getElementById('rfqRightTitle').textContent = t('importPreview');
+    document.getElementById('rfqRightActions').innerHTML = '';
+    document.getElementById('rfqRightBody').innerHTML = '<div style="text-align:center;padding:60px 20px;color:#5f6368"><div style="font-size:48px">📋</div><p style="margin-top:12px">' + t('importPreviewHint') + '</p></div>';
+    loadRFQList();
+  });
+}
+
+// ---- RESIZE HANDLE (drag to resize panels) ----
+function initRFQResize() {
+  var divider = document.getElementById('rfqDivider');
+  var left = document.getElementById('rfqLeft');
+  var right = document.getElementById('rfqRight');
+  if (!divider || !left || !right) return;
+
+  var dragging = false;
+  var startX, startLeftW;
+
+  divider.addEventListener('mousedown', function(e) {
+    dragging = true;
+    startX = e.clientX;
+    startLeftW = left.offsetWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    var dx = e.clientX - startX;
+    var total = left.parentElement.offsetWidth;
+    var newW = Math.max(280, Math.min(startLeftW + dx, total - 320));
+    left.style.width = newW + 'px';
+    left.style.flex = 'none';
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (dragging) {
+      dragging = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+  });
+}
+
+// ---- CURRENCY FORMAT ----
+function formatCurrency(amount, currency) {
+  var num = parseFloat(amount) || 0;
+  var cur = currency || 'THB';
+  var symbols = { 'JPY':'¥', 'THB':'฿', 'USD':'$', 'EUR':'€', 'CNY':'¥' };
+  var sym = symbols[cur] || '';
+  return sym + num.toLocaleString('ja-JP', {maximumFractionDigits: 0}) + ' ' + cur;
+}
+
+</script>
+
+<script>
+// Boot
+var SERVER_USER = { email:'admin@kunomura.com', name:'Admin', role:'admin', lang:'ja' };
+document.addEventListener('DOMContentLoaded', function(){ initApp(SERVER_USER); });
+</script>
+</body>
+</html>
